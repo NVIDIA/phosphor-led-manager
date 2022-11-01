@@ -82,6 +82,7 @@ deps = [
 
 subdir('manager')
 subdir('fault-monitor')
+subdir('power-led')
 
 configure_file(output: 'config.h',
     configuration: conf_data
