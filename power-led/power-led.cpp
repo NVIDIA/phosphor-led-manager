@@ -1,6 +1,8 @@
 #include "power-led-match.hpp"
 
+#include <CLI/CLI.hpp>
 #include <boost/asio/io_service.hpp>
+#include <nlohmann/json.hpp>
 #include <phosphor-logging/elog-errors.hpp>
 #include <phosphor-logging/lg2.hpp>
 #include <sdbusplus/asio/object_server.hpp>
@@ -22,9 +24,9 @@
 #define HOST_INTERFACE_NAME "xyz.openbmc_project.State.Host"
 #define PROPERTY_INTERFACE_NAME "org.freedesktop.DBus.Properties"
 
-constexpr auto post_active_group = "post_active";
-constexpr auto power_on_group = "powered_on";
-constexpr auto bmc_booted_group = "bmc_booted";
+std::string BMC_booted_group = "";
+std::string post_active_group = "";
+std::string fully_powered_on_group = "";
 
 namespace properties
 {
@@ -36,8 +38,8 @@ constexpr const char* set = "Set";
 using namespace sdbusplus::xyz::openbmc_project::State::server;
 
 // Get bytes 6-14 of postcode (these are the relevant bytes)
-const auto MB1_Start_Vect = std::vector<uint8_t>{0x05, 0x00, 0x01, 0xC1};
-const auto Exit_Boot_Vect = std::vector<uint8_t>{0x10, 0x03, 0x00, 0x19};
+auto POST_start = std::vector<uint8_t>{};
+auto POST_end = std::vector<uint8_t>{};
 // Vars to keep track of whether system entered post.
 std::atomic<bool> started_post = false;
 std::atomic<bool> ended_post = false;
@@ -50,6 +52,74 @@ static void updatePowerLed();
 void setLedGroup(const std::shared_ptr<sdbusplus::asio::connection>& conn,
                  const std::string& name, bool on);
 
+// Will throw an exception if number is not formatted as a list of uint8_t
+static std::vector<uint8_t>
+    convertStringVectToHexVect(std::vector<std::string> input)
+{
+    std::vector<uint8_t> result;
+    for (std::string elem : input)
+    {
+        // Needs to be a 8 bit number or exception
+        result.push_back(std::stoul(elem, nullptr, 16));
+    }
+
+    return result;
+}
+
+static bool readConfig(std::string configFile)
+{
+    if (configFile == "")
+    {
+        lg2::error("Power LED controller config argument not provided.");
+        return false;
+    }
+    nlohmann::json config_json;
+    try
+    {
+        std::ifstream config_ifstream{configFile};
+        config_json = nlohmann::json::parse(config_ifstream, nullptr, true);
+    }
+    catch (const std::exception& e)
+    {
+        lg2::error(
+            "Error parsing power-led-controller config file: unable to open the file or read the json.");
+        return false;
+    }
+    try
+    {
+        POST_start = convertStringVectToHexVect(
+            std::vector<std::string>(config_json["POST_start"]));
+        POST_end = convertStringVectToHexVect(
+            std::vector<std::string>(config_json["POST_end"]));
+    }
+    catch (const std::exception& e)
+    {
+        lg2::error(
+            "Error parsing power-led-controller config file: Couldn't parse the provided POST codes. Be sure the code is a valid list of strings (one byte in hex per string).");
+        return false;
+    }
+    try
+    {
+        post_active_group = config_json["POST_active_group"];
+        fully_powered_on_group = config_json["fully_powered_on_group"];
+        BMC_booted_group = config_json["BMC_booted_group"];
+    }
+    catch (const std::exception& e)
+    {
+        lg2::error(
+            "Error parsing power-led-controller config file: couldn't parse LED group names. Be sure to use the correct keys.");
+        return false;
+    }
+    if (POST_start.empty() || POST_end.empty() || post_active_group == "" ||
+        fully_powered_on_group == "" || BMC_booted_group == "")
+    {
+        lg2::error(
+            "Error parsing power-led-controller config file. Something might be missing/empty.");
+        return false;
+    }
+    return true;
+}
+
 /* Compares 2 postcodes in the form of uint8 vectors, ignoring the instance
    (last) byte If one code is longer, then skip bytes until they "line up"
     Returns 0 if equivalent, 1 if not, -1 if error.
@@ -60,7 +130,7 @@ static int checkSameCode(std::vector<uint8_t> a, std::vector<uint8_t> b)
     // Make sure both codes are not too long
     if (a.size() > 9 || b.size() > 9 || a.size() == 0 || b.size() == 0)
     {
-	lg2::error("POST code of invalid length provided for comparison.");
+        lg2::error("POST code of invalid length provided for comparison.");
         return -1;
     }
     // Figure out which code is longer and which is shorter
@@ -85,8 +155,8 @@ static int checkSameCode(std::vector<uint8_t> a, std::vector<uint8_t> b)
 }
 
 /*
- * Handler for when new POST codes are received. 
- * If MB1 Start or Exit Boot Services are seen, then
+ * Handler for when new POST codes are received.
+ * If POST_start or POST_end are seen, then
  * those booleans are updated and LED update function called
  * so that the LEDs can update accordingly.
  */
@@ -98,16 +168,16 @@ static void updatePostcodeStatus(std::vector<postcode_t> postcodes)
     {
         // Get the postcode
         std::vector<uint8_t> code = std::get<1>(postcode);
-        // If the code is the MB1_Start code, then post has started
-        if (!started_post && checkSameCode(code, MB1_Start_Vect) == 0)
+        // If the code is POST_start, then post has started
+        if (!started_post && checkSameCode(code, POST_start) == 0)
         {
             started_post = true;
             ended_post =
-                false; // Reset ended_post until it's found AFTER MB1 Start
+                false; // Reset ended_post until it's found AFTER POST_start
             change = true;
         }
-        // If the code is Exit_Boot_Services, then post has ended
-        else if (!ended_post && checkSameCode(code, Exit_Boot_Vect) == 0)
+        // If the code is POST_end, then post has ended
+        else if (!ended_post && checkSameCode(code, POST_end) == 0)
         {
             ended_post = true;
             change = true;
@@ -130,7 +200,8 @@ static void updatePowerStatus(bool isPowerOn)
     // If power state changes, any existing postcodes are irrelevant
     if (host_power_on != isPowerOn)
     {
-        if (!isPowerOn) {
+        if (!isPowerOn)
+        {
             lg2::info("Power LED: Host powering off. Resetting LED.");
             started_post = false;
             ended_post = false;
@@ -156,25 +227,25 @@ static void updatePowerLed()
         // LED = flash 1hz
         lg2::info("Power LED in standby mode (BMC booted)");
         setLedGroup(conn, post_active_group, false);
-        setLedGroup(conn, power_on_group, false);
-        setLedGroup(conn, bmc_booted_group, true);
+        setLedGroup(conn, fully_powered_on_group, false);
+        setLedGroup(conn, BMC_booted_group, true);
     }
-    // System in POST (MB1 Start reached)
+    // System in POST (POST_start code has been received)
     else if (host_power_on && started_post && !ended_post)
     {
         // LED = flash 4hz
         lg2::info("Power LED in POST mode");
-        setLedGroup(conn, bmc_booted_group, false);
+        setLedGroup(conn, BMC_booted_group, false);
         setLedGroup(conn, post_active_group, true);
-        setLedGroup(conn, power_on_group, false);
+        setLedGroup(conn, fully_powered_on_group, false);
     }
-    // Power on, POST completed (Exit Boot Services reached)
+    // Power on, POST completed (POST_end code has been received)
     else if (host_power_on && started_post && ended_post)
     {
         // LED = on;
         lg2::info("Power LED solid on (POST completed)");
         setLedGroup(conn, post_active_group, false);
-        setLedGroup(conn, power_on_group, true);
+        setLedGroup(conn, fully_powered_on_group, true);
     }
 }
 
@@ -244,7 +315,7 @@ void setLedGroup(const std::shared_ptr<sdbusplus::asio::connection>& conn,
  * This application simply creates an object that registers for incoming value
  * updates for the POST code dbus object.
  */
-int main()
+int main(int argc, char** argv)
 {
     int ret = 0;
 
@@ -252,8 +323,7 @@ int main()
     ret = sd_event_default(&event);
     if (ret < 0)
     {
-        phosphor::logging::log<phosphor::logging::level::ERR>(
-            "Error creating a default sd_event handler");
+        lg2::error("Error creating a default sd_event handler");
         return ret;
     }
     EventPtr eventP{event};
@@ -261,7 +331,20 @@ int main()
 
     conn = std::make_shared<sdbusplus::asio::connection>(io);
     auto bus = sdbusplus::bus::new_default();
-    lg2::info("Starting power led controller");
+
+    CLI::App app("power-LED-controller");
+    std::string configFile{};
+    app.add_option("-c,--config", configFile, "Path to power LED JSON config");
+    CLI11_PARSE(app, argc, argv);
+    // Read config. Stop execution if failed
+    lg2::info("Parsing power LED controller config.");
+    if (!readConfig(configFile))
+    {
+        lg2::info(
+            "Power LED config not provided or invalid. Exiting Power LED controller.");
+        return 0;
+    }
+    lg2::info("Successfully parsed power LED controller config.");
     // Initialize power status
     host_power_on = poweredOn(bus);
     // Create snooping objects for postcodes and power status
@@ -282,7 +365,7 @@ int main()
     }
     catch (const std::exception& e)
     {
-        phosphor::logging::log<phosphor::logging::level::ERR>(e.what());
+        lg2::error(e.what());
         return -1;
     }
 
