@@ -48,12 +48,18 @@ class LampTest
 
     /** @brief the lamp test request handler
      *
+     * If lamp test is running (Asserted=true) and if user requests to stop lamp
+     * test (Asserted input=false), Stop operation will not take place and set
+     * the Asserted to true itself. LampTest Asserted is/can be set to false
+     * only when the lamptest timer expires.
+     *
      *  @param[in]  group    -  Pointer to Group object
      *  @param[in]  value    -  true: start lamptest
      *                          false: stop lamptest
-     *  @return
+     *
+     *  @return Whether lamp test request is handled successfully or not.
      */
-    void requestHandler(Group* group, bool value);
+    bool requestHandler(Group* group, bool value);
 
     /** @brief Update physical LEDs states during lamp test and the lamp test is
      *         running
@@ -66,6 +72,14 @@ class LampTest
      */
     bool processLEDUpdates(const ActionSet& ledsAssert,
                            const ActionSet& ledsDeAssert);
+
+    /** @brief Clear LEDs triggerred by lamptest
+     * When system reboots during lamptest, leds triggerred by lamptest needs to
+     * be cleared in the upcoming boot. This method clears all the leds along
+     * with the persisted lamp test indicator file so that there is no sign of
+     * lamptest.
+     */
+    void clearLamps();
 
   private:
     /** @brief Timer used for LEDs lamp test period */
@@ -125,7 +139,7 @@ class LampTest
      */
     Layout::Action getActionFromString(const std::string& str);
 
-    /** @brief Notify PHYP to start / stop the lamp test
+    /** @brief Notify host to start / stop the lamp test
      *
      *  @param[in]  value   -  the Asserted property value
      */

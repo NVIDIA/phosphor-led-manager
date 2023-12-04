@@ -110,7 +110,7 @@ const phosphor::led::GroupMap loadJsonConfigV1(const Json& json)
 
     for (const auto& entry : leds)
     {
-        fs::path tmpPath(std::string{OBJPATH});
+        fs::path tmpPath("/xyz/openbmc_project/led/groups");
         tmpPath /= entry.value("group", "");
         auto objpath = tmpPath.string();
         auto members = entry.value("members", empty);
