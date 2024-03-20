@@ -19,6 +19,7 @@
 
 #include <algorithm>
 #include <iostream>
+#include <memory>
 
 int main(int argc, char** argv)
 {
@@ -42,22 +43,30 @@ int main(int argc, char** argv)
 #endif
 
     /** @brief Group manager object */
-    phosphor::led::Manager manager(bus, systemLedMap);
+    phosphor::led::Manager manager(bus, systemLedMap, event);
 
     /** @brief sd_bus object manager */
-    sdbusplus::server::manager_t objManager(bus, OBJPATH);
+    sdbusplus::server::manager_t objManager(bus,
+                                            "/xyz/openbmc_project/led/groups");
 
     /** @brief vector of led groups */
     std::vector<std::unique_ptr<phosphor::led::Group>> groups;
 
+    std::shared_ptr<phosphor::led::Serialize> serializePtr = nullptr;
+#ifdef PERSISTENT_LED_ASSERTED
     /** @brief store and re-store Group */
-    phosphor::led::Serialize serialize(SAVED_GROUPS_FILE);
+    serializePtr =
+        std::make_shared<phosphor::led::Serialize>(SAVED_GROUPS_FILE);
+#endif
 
 #ifdef USE_LAMP_TEST
     phosphor::led::LampTest lampTest(event, manager);
 
+    // Clear leds triggerred by lamp test in previous boot
+    lampTest.clearLamps();
+
     groups.emplace_back(std::make_unique<phosphor::led::Group>(
-        bus, LAMP_TEST_OBJECT, manager, serialize,
+        bus, LAMP_TEST_OBJECT, manager, serializePtr,
         std::bind(std::mem_fn(&phosphor::led::LampTest::requestHandler),
                   &lampTest, std::placeholders::_1, std::placeholders::_2)));
 
@@ -70,16 +79,16 @@ int main(int argc, char** argv)
 
     /** Now create so many dbus objects as there are groups */
     std::ranges::transform(systemLedMap, std::back_inserter(groups),
-                           [&bus, &manager, &serialize](auto& grp) {
-                               return std::make_unique<phosphor::led::Group>(
-                                   bus, grp.first, manager, serialize);
-                           });
+                           [&bus, &manager, serializePtr](auto& grp) {
+        return std::make_unique<phosphor::led::Group>(bus, grp.first, manager,
+                                                      serializePtr);
+    });
 
     // Attach the bus to sd_event to service user requests
     bus.attach_event(event.get(), SD_EVENT_PRIORITY_NORMAL);
 
     /** @brief Claim the bus */
-    bus.request_name(BUSNAME);
+    bus.request_name("xyz.openbmc_project.LED.GroupManager");
     event.loop();
 
     return 0;

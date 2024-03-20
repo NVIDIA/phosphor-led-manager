@@ -1,18 +1,16 @@
 project(
     'phosphor-ledmanager', 'cpp',
     version : '1.0.0',
-    meson_version: '>=0.57.0',
+    meson_version: '>=1.1.1',
     default_options: [
         'warning_level=3',
         'werror=true',
-        'cpp_std=c++20',
+        'cpp_std=c++23',
         'buildtype=debugoptimized',
     ]
 )
 
 conf_data = configuration_data()
-conf_data.set_quoted('BUSNAME', 'xyz.openbmc_project.LED.GroupManager')
-conf_data.set_quoted('OBJPATH', '/xyz/openbmc_project/led/groups')
 conf_data.set_quoted('LED_JSON_FILE', '/usr/share/phosphor-led-manager/led-group-config.json')
 conf_data.set_quoted('SAVED_GROUPS_FILE', '/var/lib/phosphor-led-manager/savedGroups')
 conf_data.set_quoted('CALLOUT_FWD_ASSOCIATION', 'callout')
@@ -21,9 +19,10 @@ conf_data.set_quoted('ELOG_ENTRY', 'entry')
 conf_data.set_quoted('LED_FAULT', 'fault')
 
 conf_data.set('CLASS_VERSION', 1)
-conf_data.set('LED_USE_JSON', get_option('use-json').enabled())
-conf_data.set('USE_LAMP_TEST', get_option('use-lamp-test').enabled())
-conf_data.set('MONITOR_OPERATIONAL_STATUS', get_option('monitor-operational-status').enabled())
+conf_data.set('LED_USE_JSON', get_option('use-json').allowed())
+conf_data.set('USE_LAMP_TEST', get_option('use-lamp-test').allowed())
+conf_data.set('MONITOR_OPERATIONAL_STATUS', get_option('monitor-operational-status').allowed())
+conf_data.set('PERSISTENT_LED_ASSERTED', get_option('persistent-led-asserted').allowed())
 
 sdbusplus_dep = dependency('sdbusplus')
 sdeventplus_dep = dependency('sdeventplus')
@@ -93,8 +92,7 @@ install_data(
     install_dir: get_option('bindir')
 )
 
-build_tests = get_option('tests')
-if not build_tests.disabled()
+if get_option('tests').allowed()
   subdir('test')
 endif
 

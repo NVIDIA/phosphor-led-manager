@@ -13,7 +13,7 @@ if not gtest_dep.found() or not gmock_dep.found()
         gmock_dep = gtest_proj.dependency('gmock')
   else
         assert(
-            not get_option('tests').enabled(),
+            not get_option('tests').allowed(),
             'Googletest is required if tests are enabled'
         )
   endif
@@ -21,15 +21,21 @@ endif
 
 test_sources = [
   '../manager/manager.cpp',
-  '../manager/serialize.cpp',
   '../utils.cpp'
 ]
 
 tests = [
   'utest.cpp',
-  'utest-serialize.cpp',
   'utest-led-json.cpp',
 ]
+if get_option('persistent-led-asserted').allowed()
+  test_sources += [
+    '../manager/serialize.cpp',
+  ]
+  tests += [
+    'utest-serialize.cpp',
+  ]
+endif
 
 foreach t : tests
   test(t, executable(t.underscorify(), t,
