@@ -33,17 +33,16 @@
 
 owners:
 - patrick@stwcx.xyz
-- vishwa@linux.vnet.ibm.com
 
 reviewers:
 - jinu.joy.thomas@in.ibm.com
-- liuxiwei@inspur.com
+- liuxiwei@ieisystem.com
 
 matchers:
 
 openbmc:
 - name: George Liu
-  email: liuxiwei@inspur.com
+  email: liuxiwei@ieisystem.com
   discord: George Liu
 - name: Jinu Joy Thomas
   email: jinu.joy.thomas@in.ibm.com
@@ -51,6 +50,3 @@ openbmc:
 - name: Patrick Williams
   email: patrick@stwcx.xyz
   discord: stwcx
-- name: Vishwanatha Subbanna
-  email: vishwa@linux.vnet.ibm.com
-  discord: vishwa
