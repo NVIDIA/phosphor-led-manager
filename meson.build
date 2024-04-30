@@ -10,8 +10,9 @@ project(
     ]
 )
 
+cpp = meson.get_compiler('cpp')
+
 conf_data = configuration_data()
-conf_data.set_quoted('LED_JSON_FILE', '/usr/share/phosphor-led-manager/led-group-config.json')
 conf_data.set_quoted('SAVED_GROUPS_FILE', '/var/lib/phosphor-led-manager/savedGroups')
 conf_data.set_quoted('CALLOUT_FWD_ASSOCIATION', 'callout')
 conf_data.set_quoted('CALLOUT_REV_ASSOCIATION', 'fault')
@@ -24,26 +25,15 @@ conf_data.set('USE_LAMP_TEST', get_option('use-lamp-test').allowed())
 conf_data.set('MONITOR_OPERATIONAL_STATUS', get_option('monitor-operational-status').allowed())
 conf_data.set('PERSISTENT_LED_ASSERTED', get_option('persistent-led-asserted').allowed())
 
-sdbusplus_dep = dependency('sdbusplus')
-sdeventplus_dep = dependency('sdeventplus')
+nlohmann_json_dep = dependency('nlohmann_json', include_type: 'system')
 phosphor_dbus_interfaces_dep = dependency('phosphor-dbus-interfaces')
 phosphor_logging_dep = dependency('phosphor-logging')
+sdbusplus_dep = dependency('sdbusplus')
+sdeventplus_dep = dependency('sdeventplus')
 
 prog_python = find_program('python3', required: true)
 realpath_prog = find_program('realpath')
 
-cpp = meson.get_compiler('cpp')
-if cpp.has_header('nlohmann/json.hpp')
-    nlohmann_json_dep = declare_dependency()
-else
-    subproject('nlohmann', required: false)
-    nlohmann_json_dep = declare_dependency(
-        include_directories: [
-            'subprojects/nlohmann/single_include',
-            'subprojects/nlohmann/single_include/nlohmann',
-        ]
-    )
-endif
 
 if cpp.has_header('CLI/CLI.hpp')
     CLI11_dep = declare_dependency()
@@ -60,7 +50,7 @@ has_cereal = cpp.has_header_symbol(
     required: false)
 if not has_cereal
     cereal_opts = import('cmake').subproject_options()
-    cereal_opts.add_cmake_defines({'BUILD_TESTS': 'OFF'})
+    cereal_opts.add_cmake_defines({'BUILD_TESTS': 'OFF', 'SKIP_PERFORMANCE_COMPARISON': 'ON'})
     cereal_proj = import('cmake').subproject(
         'cereal',
         options: cereal_opts,
