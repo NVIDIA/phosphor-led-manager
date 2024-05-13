@@ -11,8 +11,7 @@ namespace StateServer = sdbusplus::xyz::openbmc_project::State::server;
 // Singleton holder to store host/node and other path information
 class PostCodeDataHolder
 {
-    PostCodeDataHolder()
-    {}
+    PostCodeDataHolder() {}
 
   public:
     static PostCodeDataHolder& getInstance()
