@@ -302,7 +302,8 @@ void setLedGroup(const std::shared_ptr<sdbusplus::asio::connection>& conn,
         {
             std::cerr << "Failed to set LED " << name << "\n";
         }
-    }, "xyz.openbmc_project.LED.GroupManager",
+    },
+        "xyz.openbmc_project.LED.GroupManager",
         "/xyz/openbmc_project/led/groups/" + name, properties::interface,
         properties::set, "xyz.openbmc_project.Led.Group", "Asserted",
         std::variant<bool>(on));
