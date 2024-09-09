@@ -68,20 +68,20 @@ class PowerLEDMatch
                 sdbusplus::bus::match::rules::interface(
                     postcodeDataHolderObj.PropertiesIntf),
             [this, postcode_handler](sdbusplus::message::message& msg) {
-                std::string objectName;
-                std::map<std::string, std::variant<postcode_t>> msgData;
-                msg.read(objectName, msgData);
-                // Check if it was the Value property that changed.
-                auto valPropMap = msgData.find("Value");
-                {
-                    if (valPropMap != msgData.end())
-                    {
-                        std::vector<postcode_t> code = {
-                            std::get<postcode_t>(valPropMap->second)};
-                        postcode_handler(code);
-                    }
-                }
-            }),
+        std::string objectName;
+        std::map<std::string, std::variant<postcode_t>> msgData;
+        msg.read(objectName, msgData);
+        // Check if it was the Value property that changed.
+        auto valPropMap = msgData.find("Value");
+        {
+            if (valPropMap != msgData.end())
+            {
+                std::vector<postcode_t> code = {
+                    std::get<postcode_t>(valPropMap->second)};
+                postcode_handler(code);
+            }
+        }
+    }),
         propertiesChangedSignalCurrentHostState(
             bus,
             sdbusplus::bus::match::rules::type::signal() +
@@ -92,29 +92,28 @@ class PowerLEDMatch
                 sdbusplus::bus::match::rules::interface(
                     postcodeDataHolderObj.PropertiesIntf),
             [this, host_state_handler](sdbusplus::message::message& msg) {
-                std::string objectName;
-                std::map<std::string, std::variant<std::string>> msgData;
-                msg.read(objectName, msgData);
-                // Check if it was the Value property that changed.
-                auto valPropMap = msgData.find("CurrentHostState");
+        std::string objectName;
+        std::map<std::string, std::variant<std::string>> msgData;
+        msg.read(objectName, msgData);
+        // Check if it was the Value property that changed.
+        auto valPropMap = msgData.find("CurrentHostState");
+        {
+            if (valPropMap != msgData.end())
+            {
+                StateServer::Host::HostState currentHostState =
+                    StateServer::Host::convertHostStateFromString(
+                        std::get<std::string>(valPropMap->second));
+                if (currentHostState == StateServer::Host::HostState::Off)
                 {
-                    if (valPropMap != msgData.end())
-                    {
-                        StateServer::Host::HostState currentHostState =
-                            StateServer::Host::convertHostStateFromString(
-                                std::get<std::string>(valPropMap->second));
-                        if (currentHostState ==
-                            StateServer::Host::HostState::Off)
-                        {
-                            host_state_handler(false);
-                        }
-                        else
-                        {
-                            host_state_handler(true);
-                        }
-                    }
+                    host_state_handler(false);
                 }
-            })
+                else
+                {
+                    host_state_handler(true);
+                }
+            }
+        }
+    })
     {}
 
     PowerLEDMatch() = delete; // no default constructor
