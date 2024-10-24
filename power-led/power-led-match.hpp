@@ -11,7 +11,7 @@ namespace StateServer = sdbusplus::xyz::openbmc_project::State::server;
 // Singleton holder to store host/node and other path information
 class PostCodeDataHolder
 {
-    PostCodeDataHolder() {}
+    PostCodeDataHolder() = default;
 
   public:
     static PostCodeDataHolder& getInstance()
@@ -63,65 +63,66 @@ class PowerLEDMatch
             sdbusplus::bus::match::rules::type::signal() +
                 sdbusplus::bus::match::rules::member("PropertiesChanged") +
                 sdbusplus::bus::match::rules::path(
-                    postcodeDataHolderObj.PostCodePath +
+                    PostCodeDataHolder::PostCodePath +
                     std::to_string(postcodeDataHolderObj.node)) +
                 sdbusplus::bus::match::rules::interface(
-                    postcodeDataHolderObj.PropertiesIntf),
-            [this, postcode_handler](sdbusplus::message::message& msg) {
-        std::string objectName;
-        std::map<std::string, std::variant<postcode_t>> msgData;
-        msg.read(objectName, msgData);
-        // Check if it was the Value property that changed.
-        auto valPropMap = msgData.find("Value");
-        {
-            if (valPropMap != msgData.end())
-            {
-                std::vector<postcode_t> code = {
-                    std::get<postcode_t>(valPropMap->second)};
-                postcode_handler(code);
-            }
-        }
-    }),
+                    PostCodeDataHolder::PropertiesIntf),
+            [postcode_handler](sdbusplus::message::message& msg) {
+                std::string objectName;
+                std::map<std::string, std::variant<postcode_t>> msgData;
+                msg.read(objectName, msgData);
+                // Check if it was the Value property that changed.
+                auto valPropMap = msgData.find("Value");
+                {
+                    if (valPropMap != msgData.end())
+                    {
+                        std::vector<postcode_t> code = {
+                            std::get<postcode_t>(valPropMap->second)};
+                        postcode_handler(code);
+                    }
+                }
+            }),
         propertiesChangedSignalCurrentHostState(
             bus,
             sdbusplus::bus::match::rules::type::signal() +
                 sdbusplus::bus::match::rules::member("PropertiesChanged") +
                 sdbusplus::bus::match::rules::path(
-                    postcodeDataHolderObj.HostStatePathPrefix +
+                    PostCodeDataHolder::HostStatePathPrefix +
                     std::to_string(postcodeDataHolderObj.node)) +
                 sdbusplus::bus::match::rules::interface(
-                    postcodeDataHolderObj.PropertiesIntf),
-            [this, host_state_handler](sdbusplus::message::message& msg) {
-        std::string objectName;
-        std::map<std::string, std::variant<std::string>> msgData;
-        msg.read(objectName, msgData);
-        // Check if it was the Value property that changed.
-        auto valPropMap = msgData.find("CurrentHostState");
-        {
-            if (valPropMap != msgData.end())
-            {
-                StateServer::Host::HostState currentHostState =
-                    StateServer::Host::convertHostStateFromString(
-                        std::get<std::string>(valPropMap->second));
-                if (currentHostState == StateServer::Host::HostState::Off)
+                    PostCodeDataHolder::PropertiesIntf),
+            [host_state_handler](sdbusplus::message::message& msg) {
+                std::string objectName;
+                std::map<std::string, std::variant<std::string>> msgData;
+                msg.read(objectName, msgData);
+                // Check if it was the Value property that changed.
+                auto valPropMap = msgData.find("CurrentHostState");
                 {
-                    host_state_handler(false);
+                    if (valPropMap != msgData.end())
+                    {
+                        StateServer::Host::HostState currentHostState =
+                            StateServer::Host::convertHostStateFromString(
+                                std::get<std::string>(valPropMap->second));
+                        if (currentHostState ==
+                            StateServer::Host::HostState::Off)
+                        {
+                            host_state_handler(false);
+                        }
+                        else
+                        {
+                            host_state_handler(true);
+                        }
+                    }
                 }
-                else
-                {
-                    host_state_handler(true);
-                }
-            }
-        }
-    })
+            })
     {}
 
     PowerLEDMatch() = delete; // no default constructor
     ~PowerLEDMatch() = default;
     PowerLEDMatch(const PowerLEDMatch&) = delete;
     PowerLEDMatch& operator=(const PowerLEDMatch&) = delete;
-    PowerLEDMatch(PowerLEDMatch&&) = default;
-    PowerLEDMatch& operator=(PowerLEDMatch&&) = default;
+    PowerLEDMatch(PowerLEDMatch&&) = delete;
+    PowerLEDMatch& operator=(PowerLEDMatch&&) = delete;
 
   protected:
     sdbusplus::bus::bus& bus;

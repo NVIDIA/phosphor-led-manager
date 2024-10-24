@@ -19,19 +19,19 @@
 #include <iterator>
 #include <sstream>
 
-#define HOST_OBJECT_NAME "/xyz/openbmc_project/state/host0"
-#define HOST_SERVICE_NAME "xyz.openbmc_project.State.Host"
-#define HOST_INTERFACE_NAME "xyz.openbmc_project.State.Host"
-#define PROPERTY_INTERFACE_NAME "org.freedesktop.DBus.Properties"
+constexpr const char* HOST_OBJECT_NAME = "/xyz/openbmc_project/state/host0";
+constexpr const char* HOST_SERVICE_NAME = "xyz.openbmc_project.State.Host";
+constexpr const char* HOST_INTERFACE_NAME = "xyz.openbmc_project.State.Host";
+constexpr const char* PROPERTY_INTERFACE_NAME =
+    "org.freedesktop.DBus.Properties";
 
-std::string BMC_booted_group = "";
-std::string post_active_group = "";
-std::string fully_powered_on_group = "";
+std::string BMC_booted_group;
+std::string post_active_group;
+std::string fully_powered_on_group;
 
 namespace properties
 {
 constexpr const char* interface = "org.freedesktop.DBus.Properties";
-constexpr const char* get = "Get";
 constexpr const char* set = "Set";
 } // namespace properties
 
@@ -57,7 +57,8 @@ static std::vector<uint8_t>
     convertStringVectToHexVect(std::vector<std::string> input)
 {
     std::vector<uint8_t> result;
-    for (std::string elem : input)
+    result.reserve(input.size());
+    for (const std::string& elem : input)
     {
         // Needs to be a 8 bit number or exception
         result.push_back(std::stoul(elem, nullptr, 16));
@@ -143,7 +144,7 @@ static int checkSameCode(std::vector<uint8_t> a, std::vector<uint8_t> b)
     // In other words, skip the bytes that the shorter doesn't have
     advance(longer_it, longer_code.size() - shorter_code.size() - 1);
     // Compare the elements until one doesn't match
-    for (; longer_it != longer_code.end(), shorter_it != shorter_code.end();
+    for (; longer_it != longer_code.end() && shorter_it != shorter_code.end();
          longer_it++, shorter_it++)
     {
         if (*longer_it != *shorter_it)
@@ -283,7 +284,7 @@ std::vector<postcode_t> getPostCodesFromDBUS(sdbusplus::bus::bus& bus)
     if (result.is_method_error())
     {
         lg2::error("Could not get POST codes for Power LED Controller");
-        return std::vector<postcode_t>();
+        return {};
     }
     result.read(codeArray);
 
@@ -298,11 +299,11 @@ void setLedGroup(const std::shared_ptr<sdbusplus::asio::connection>& conn,
 {
     conn->async_method_call(
         [name](const boost::system::error_code ec) {
-        if (ec)
-        {
-            std::cerr << "Failed to set LED " << name << "\n";
-        }
-    },
+            if (ec)
+            {
+                std::cerr << "Failed to set LED " << name << "\n";
+            }
+        },
         "xyz.openbmc_project.LED.GroupManager",
         "/xyz/openbmc_project/led/groups/" + name, properties::interface,
         properties::set, "xyz.openbmc_project.Led.Group", "Asserted",
