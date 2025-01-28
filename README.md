@@ -10,13 +10,87 @@ identify the system, they should all light up together.
 
 The configuration can happen via json or yaml.
 
-## Configuration Example (JSON)
+### Configuration: LED Priority
+
+Each LED can have "Priority" as "Blink", "Off" or "On". If this property is
+defined, it should be defined on each instance of the LED in the config.
+
+When multiple LED groups are asserted and contain the same LED, "Priority"
+determines the state of the LED.
+
+For example, Group 1 says LED1 should be "Blink", and Group 2 says it should be
+"On". LED1 will then have the state declared in "Priority".
+
+## Configuration: LED Group Priority
+
+Using LED Priority is fine for simple configurations, but when group state needs
+to always be consistent, Group Priority can be used to enforce the consistent
+representation.
+
+The Group `Priority` is optional and a higher priority means that when 2 groups
+are asserted, the one with highest `Priority` will be represented consistently.
+Meaning all its LEDs will have the state as per the configuration.
+
+## Configuration Example with Group Priorities (JSON)
+
+Here we prioritize the locating group above the fault group since locating may
+be required to fix the fault.
+
+So independent of the order that these groups are asserted, if both are
+asserted, "sys_id" should be in "Blink" state.
+
+The "unrelated" group will have the default group priority of 0.
+
+```json
+{
+  "leds": [
+    {
+      "group": "enclosure_identify",
+      "Priority": 2,
+      "members": [
+        {
+          "Name": "sys_id",
+          "Action": "Blink"
+        },
+        {
+          "Name": "rear_id",
+          "Action": "Blink"
+        }
+      ]
+    },
+    {
+      "group": "fault",
+      "Priority": 1,
+      "members": [
+        {
+          "Name": "sys_id",
+          "Action": "On"
+        },
+        {
+          "Name": "fault",
+          "Action": "On"
+        }
+      ]
+    },
+    {
+      "group": "unrelated",
+      "members": [
+        {
+          "Name": "rear_id",
+          "Action": "On"
+        }
+      ]
+    }
+  ]
+}
+```
+
+### Configuration Example (JSON)
 
 This is our configuration file. It describes 2 LEDs for the
 '_enclosure_identify_' group, with their respective states and duty cycles.
 
-```
-$ cat example.json
+```json
 {
   "leds": [
     {
@@ -44,8 +118,8 @@ $ cat example.json
 
 Then start the program with
 
-```
-$ ./phosphor-led-manager --config example.json
+```text
+~# ./phosphor-led-manager --config example.json
 ```
 
 ## Dbus interface
@@ -53,7 +127,7 @@ $ ./phosphor-led-manager --config example.json
 When starting the program, our LED group shows up on dbus. Usually there will be
 many more groups.
 
-```
+```text
 $ busctl tree xyz.openbmc_project.LED.GroupManager
 `- /xyz
   `- /xyz/openbmc_project
@@ -74,7 +148,7 @@ to keep it readable.
 
 We can now drive the entire group by setting it's 'Asserted' property on dbus.
 
-```
+```text
 $ busctl set-property \
 xyz.openbmc_project.LED.GroupManager \
 /xyz/openbmc_project/led/groups/enclosure_identify \
@@ -86,7 +160,7 @@ exposed by _phosphor-led-sysfs_ to set each LED state.
 
 ## How to Build
 
-```
+```text
 meson setup build
 cd build
 ninja

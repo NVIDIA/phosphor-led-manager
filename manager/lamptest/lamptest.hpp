@@ -26,8 +26,8 @@ class LampTest
     ~LampTest() = default;
     LampTest(const LampTest&) = delete;
     LampTest& operator=(const LampTest&) = delete;
-    LampTest(LampTest&&) = default;
-    LampTest& operator=(LampTest&&) = default;
+    LampTest(LampTest&&) = delete;
+    LampTest& operator=(LampTest&&) = delete;
 
     /** @brief Constructs LED LampTest
      *
@@ -38,8 +38,8 @@ class LampTest
      * @param[in] manager - reference to manager instance
      */
     LampTest(const sdeventplus::Event& event, Manager& manager) :
-        timer(event, std::bind(std::mem_fn(&LampTest::timeOutHandler), this)),
-        manager(manager), groupObj(NULL)
+        timer(event, [this](auto&) { timeOutHandler(); }), manager(manager),
+        groupObj(nullptr)
     {
         // Get the force update and/or skipped physical LEDs names from the
         // lamp-test-led-overrides.json file during lamp
@@ -79,7 +79,7 @@ class LampTest
      * with the persisted lamp test indicator file so that there is no sign of
      * lamptest.
      */
-    void clearLamps();
+    static void clearLamps();
 
   private:
     /** @brief Timer used for LEDs lamp test period */
@@ -87,9 +87,6 @@ class LampTest
 
     /** @brief Reference to Manager object */
     Manager& manager;
-
-    /** DBusHandler class handles the D-Bus operations */
-    DBusHandler dBusHandler;
 
     /** @brief Pointer to Group object */
     Group* groupObj;
@@ -137,13 +134,13 @@ class LampTest
      *
      *  @return enumeration equivalent of the passed in string
      */
-    Layout::Action getActionFromString(const std::string& str);
+    static Layout::Action getActionFromString(const std::string& str);
 
     /** @brief Notify host to start / stop the lamp test
      *
      *  @param[in]  value   -  the Asserted property value
      */
-    void doHostLampTest(bool value);
+    static void doHostLampTest(bool value);
 
     /** @brief Get physical LED names from lamp test JSON config file
      *

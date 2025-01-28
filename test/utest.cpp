@@ -16,10 +16,7 @@ class LedTest : public ::testing::Test
     {
         // Nothing here
     }
-    ~LedTest()
-    {
-        // Leaving up to auto cleanup.
-    }
+    ~LedTest() override = default;
 };
 
 /** @brief Assert Single LED to On */
@@ -31,9 +28,10 @@ TEST_F(LedTest, assertSingleLedOn)
         ActionSet ledsAssert{};
         ActionSet ledsDeAssert{};
 
-        auto group = "/xyz/openbmc_project/ledmanager/groups/SingleLed";
-        auto result = manager.setGroupState(group, true, ledsAssert,
-                                            ledsDeAssert);
+        static constexpr auto group =
+            "/xyz/openbmc_project/ledmanager/groups/SingleLed";
+        auto result =
+            manager.setGroupState(group, true, ledsAssert, ledsDeAssert);
         EXPECT_EQ(true, result);
 
         // Need just the ledsAssserted populated with these.
@@ -62,9 +60,10 @@ TEST_F(LedTest, assertSingleLedBlink)
         ActionSet ledsAssert{};
         ActionSet ledsDeAssert{};
 
-        auto group = "/xyz/openbmc_project/ledmanager/groups/SingleLed";
-        auto result = manager.setGroupState(group, true, ledsAssert,
-                                            ledsDeAssert);
+        static constexpr auto group =
+            "/xyz/openbmc_project/ledmanager/groups/SingleLed";
+        auto result =
+            manager.setGroupState(group, true, ledsAssert, ledsDeAssert);
         EXPECT_EQ(true, result);
 
         // Need just the ledsAssserted populated with these.
@@ -93,9 +92,10 @@ TEST_F(LedTest, assertSingleLedOnAndreAssert)
         ActionSet ledsAssert{};
         ActionSet ledsDeAssert{};
 
-        auto group = "/xyz/openbmc_project/ledmanager/groups/SingleLed";
-        auto result = manager.setGroupState(group, true, ledsAssert,
-                                            ledsDeAssert);
+        static constexpr auto group =
+            "/xyz/openbmc_project/ledmanager/groups/SingleLed";
+        auto result =
+            manager.setGroupState(group, true, ledsAssert, ledsDeAssert);
         EXPECT_EQ(true, result);
 
         // Need just the ledsAssserted populated with these.
@@ -118,9 +118,10 @@ TEST_F(LedTest, assertSingleLedOnAndreAssert)
         ActionSet ledsAssert{};
         ActionSet ledsDeAssert{};
 
-        auto group = "/xyz/openbmc_project/ledmanager/groups/SingleLed";
-        auto result = manager.setGroupState(group, true, ledsAssert,
-                                            ledsDeAssert);
+        static constexpr auto group =
+            "/xyz/openbmc_project/ledmanager/groups/SingleLed";
+        auto result =
+            manager.setGroupState(group, true, ledsAssert, ledsDeAssert);
         EXPECT_EQ(true, result);
 
         EXPECT_EQ(0, ledsAssert.size());
@@ -137,9 +138,10 @@ TEST_F(LedTest, assertMultipleLedOn)
         ActionSet ledsAssert{};
         ActionSet ledsDeAssert{};
 
-        auto group = "/xyz/openbmc_project/ledmanager/groups/MultipleLeds";
-        auto result = manager.setGroupState(group, true, ledsAssert,
-                                            ledsDeAssert);
+        static constexpr auto group =
+            "/xyz/openbmc_project/ledmanager/groups/MultipleLeds";
+        auto result =
+            manager.setGroupState(group, true, ledsAssert, ledsDeAssert);
         EXPECT_EQ(true, result);
 
         // Need just the ledsAssserted populated with these.
@@ -172,9 +174,10 @@ TEST_F(LedTest, assertMultipleLedBlink)
         ActionSet ledsAssert{};
         ActionSet ledsDeAssert{};
 
-        auto group = "/xyz/openbmc_project/ledmanager/groups/MultipleLeds";
-        auto result = manager.setGroupState(group, true, ledsAssert,
-                                            ledsDeAssert);
+        static constexpr auto group =
+            "/xyz/openbmc_project/ledmanager/groups/MultipleLeds";
+        auto result =
+            manager.setGroupState(group, true, ledsAssert, ledsDeAssert);
         EXPECT_EQ(true, result);
 
         // Need just the ledsAssserted populated with these.
@@ -207,9 +210,10 @@ TEST_F(LedTest, assertMultipleLedBlinkAndDeAssert)
         ActionSet ledsAssert{};
         ActionSet ledsDeAssert{};
 
-        auto group = "/xyz/openbmc_project/ledmanager/groups/MultipleLeds";
-        auto result = manager.setGroupState(group, true, ledsAssert,
-                                            ledsDeAssert);
+        static constexpr auto group =
+            "/xyz/openbmc_project/ledmanager/groups/MultipleLeds";
+        auto result =
+            manager.setGroupState(group, true, ledsAssert, ledsDeAssert);
         EXPECT_EQ(true, result);
 
         // Need just the ledsAssserted populated with these.
@@ -236,9 +240,10 @@ TEST_F(LedTest, assertMultipleLedBlinkAndDeAssert)
         ActionSet ledsAssert{};
         ActionSet ledsDeAssert{};
 
-        auto group = "/xyz/openbmc_project/ledmanager/groups/MultipleLeds";
-        auto result = manager.setGroupState(group, false, ledsAssert,
-                                            ledsDeAssert);
+        static constexpr auto group =
+            "/xyz/openbmc_project/ledmanager/groups/MultipleLeds";
+        auto result =
+            manager.setGroupState(group, false, ledsAssert, ledsDeAssert);
         EXPECT_EQ(false, result);
 
         // Need just the ledsAssserted populated with these.
@@ -271,9 +276,10 @@ TEST_F(LedTest, assertMultipleLedBlinkAndDeAssertTwice)
         ActionSet ledsAssert{};
         ActionSet ledsDeAssert{};
 
-        auto group = "/xyz/openbmc_project/ledmanager/groups/MultipleLeds";
-        auto result = manager.setGroupState(group, true, ledsAssert,
-                                            ledsDeAssert);
+        static constexpr auto group =
+            "/xyz/openbmc_project/ledmanager/groups/MultipleLeds";
+        auto result =
+            manager.setGroupState(group, true, ledsAssert, ledsDeAssert);
         EXPECT_EQ(true, result);
 
         // Need just the ledsAssserted populated with these.
@@ -300,9 +306,10 @@ TEST_F(LedTest, assertMultipleLedBlinkAndDeAssertTwice)
         ActionSet ledsAssert{};
         ActionSet ledsDeAssert{};
 
-        auto group = "/xyz/openbmc_project/ledmanager/groups/MultipleLeds";
-        auto result = manager.setGroupState(group, false, ledsAssert,
-                                            ledsDeAssert);
+        static constexpr auto group =
+            "/xyz/openbmc_project/ledmanager/groups/MultipleLeds";
+        auto result =
+            manager.setGroupState(group, false, ledsAssert, ledsDeAssert);
         EXPECT_EQ(false, result);
 
         // Need just the ledsAssserted populated with these.
@@ -329,9 +336,10 @@ TEST_F(LedTest, assertMultipleLedBlinkAndDeAssertTwice)
         ActionSet ledsAssert{};
         ActionSet ledsDeAssert{};
 
-        auto group = "/xyz/openbmc_project/ledmanager/groups/MultipleLeds";
-        auto result = manager.setGroupState(group, false, ledsAssert,
-                                            ledsDeAssert);
+        static constexpr auto group =
+            "/xyz/openbmc_project/ledmanager/groups/MultipleLeds";
+        auto result =
+            manager.setGroupState(group, false, ledsAssert, ledsDeAssert);
         EXPECT_EQ(false, result);
         EXPECT_EQ(0, ledsDeAssert.size());
         EXPECT_EQ(0, ledsAssert.size());
@@ -347,9 +355,10 @@ TEST_F(LedTest, assertMultipleLedOnAndBlink)
         ActionSet ledsAssert{};
         ActionSet ledsDeAssert{};
 
-        auto group = "/xyz/openbmc_project/ledmanager/groups/MultipleLedsMix";
-        auto result = manager.setGroupState(group, true, ledsAssert,
-                                            ledsDeAssert);
+        static constexpr auto group =
+            "/xyz/openbmc_project/ledmanager/groups/MultipleLedsMix";
+        auto result =
+            manager.setGroupState(group, true, ledsAssert, ledsDeAssert);
         EXPECT_EQ(true, result);
 
         // Need just the ledsAssserted populated with these.
@@ -386,9 +395,10 @@ TEST_F(LedTest, assertTwoGroupsOnWithDistinctLEDOn)
         ActionSet ledsAssert{};
         ActionSet ledsDeAssert{};
 
-        auto group = "/xyz/openbmc_project/ledmanager/groups/MultipleLedsASet";
-        auto result = manager.setGroupState(group, true, ledsAssert,
-                                            ledsDeAssert);
+        static constexpr auto group =
+            "/xyz/openbmc_project/ledmanager/groups/MultipleLedsASet";
+        auto result =
+            manager.setGroupState(group, true, ledsAssert, ledsDeAssert);
         EXPECT_EQ(true, result);
 
         // Need just the ledsAssserted populated with these.
@@ -415,9 +425,10 @@ TEST_F(LedTest, assertTwoGroupsOnWithDistinctLEDOn)
         ActionSet ledsAssert{};
         ActionSet ledsDeAssert{};
 
-        auto group = "/xyz/openbmc_project/ledmanager/groups/MultipleLedsBSet";
-        auto result = manager.setGroupState(group, true, ledsAssert,
-                                            ledsDeAssert);
+        static constexpr auto group =
+            "/xyz/openbmc_project/ledmanager/groups/MultipleLedsBSet";
+        auto result =
+            manager.setGroupState(group, true, ledsAssert, ledsDeAssert);
         EXPECT_EQ(true, result);
 
         // Need just the ledsAssserted populated with these.
@@ -450,9 +461,10 @@ TEST_F(LedTest, asserttwoGroupsWithOneComonLEDOn)
         ActionSet ledsAssert{};
         ActionSet ledsDeAssert{};
 
-        auto group = "/xyz/openbmc_project/ledmanager/groups/MultipleLedsASet";
-        auto result = manager.setGroupState(group, true, ledsAssert,
-                                            ledsDeAssert);
+        static constexpr auto group =
+            "/xyz/openbmc_project/ledmanager/groups/MultipleLedsASet";
+        auto result =
+            manager.setGroupState(group, true, ledsAssert, ledsDeAssert);
         EXPECT_EQ(true, result);
 
         // Need just the ledsAssserted populated with these.
@@ -479,9 +491,10 @@ TEST_F(LedTest, asserttwoGroupsWithOneComonLEDOn)
         ActionSet ledsAssert{};
         ActionSet ledsDeAssert{};
 
-        auto group = "/xyz/openbmc_project/ledmanager/groups/MultipleLedsBSet";
-        auto result = manager.setGroupState(group, true, ledsAssert,
-                                            ledsDeAssert);
+        static constexpr auto group =
+            "/xyz/openbmc_project/ledmanager/groups/MultipleLedsBSet";
+        auto result =
+            manager.setGroupState(group, true, ledsAssert, ledsDeAssert);
         EXPECT_EQ(true, result);
 
         // Need just the ledsAssserted populated with these.
@@ -513,9 +526,10 @@ TEST_F(LedTest, asserttwoGroupsWithOneComonLEDOnOneLEDBlinkPriorityAndDeAssertB)
         ActionSet ledsAssert{};
         ActionSet ledsDeAssert{};
 
-        auto group = "/xyz/openbmc_project/ledmanager/groups/MultipleLedsASet";
-        auto result = manager.setGroupState(group, true, ledsAssert,
-                                            ledsDeAssert);
+        static constexpr auto group =
+            "/xyz/openbmc_project/ledmanager/groups/MultipleLedsASet";
+        auto result =
+            manager.setGroupState(group, true, ledsAssert, ledsDeAssert);
         EXPECT_EQ(true, result);
 
         // Need just the ledsAssserted populated with these.
@@ -542,9 +556,10 @@ TEST_F(LedTest, asserttwoGroupsWithOneComonLEDOnOneLEDBlinkPriorityAndDeAssertB)
         ActionSet ledsAssert{};
         ActionSet ledsDeAssert{};
 
-        auto group = "/xyz/openbmc_project/ledmanager/groups/MultipleLedsBSet";
-        auto result = manager.setGroupState(group, true, ledsAssert,
-                                            ledsDeAssert);
+        static constexpr auto group =
+            "/xyz/openbmc_project/ledmanager/groups/MultipleLedsBSet";
+        auto result =
+            manager.setGroupState(group, true, ledsAssert, ledsDeAssert);
         EXPECT_EQ(true, result);
 
         // Need just the ledsAssserted populated with these.
@@ -570,9 +585,10 @@ TEST_F(LedTest, asserttwoGroupsWithOneComonLEDOnOneLEDBlinkPriorityAndDeAssertB)
         ActionSet ledsAssert{};
         ActionSet ledsDeAssert{};
 
-        auto group = "/xyz/openbmc_project/ledmanager/groups/MultipleLedsBSet";
-        auto result = manager.setGroupState(group, false, ledsAssert,
-                                            ledsDeAssert);
+        static constexpr auto group =
+            "/xyz/openbmc_project/ledmanager/groups/MultipleLedsBSet";
+        auto result =
+            manager.setGroupState(group, false, ledsAssert, ledsDeAssert);
         EXPECT_EQ(false, result);
 
         // Need just the ledsDeAssserted populated with these.
@@ -605,9 +621,10 @@ TEST_F(LedTest, asserttwoGroupsWithOneComonLEDOnOneLEDBlinkPriorityAndDeAssertA)
         ActionSet ledsAssert{};
         ActionSet ledsDeAssert{};
 
-        auto group = "/xyz/openbmc_project/ledmanager/groups/MultipleLedsASet";
-        auto result = manager.setGroupState(group, true, ledsAssert,
-                                            ledsDeAssert);
+        static constexpr auto group =
+            "/xyz/openbmc_project/ledmanager/groups/MultipleLedsASet";
+        auto result =
+            manager.setGroupState(group, true, ledsAssert, ledsDeAssert);
         EXPECT_EQ(true, result);
 
         // Need just the ledsAssserted populated with these.
@@ -634,9 +651,10 @@ TEST_F(LedTest, asserttwoGroupsWithOneComonLEDOnOneLEDBlinkPriorityAndDeAssertA)
         ActionSet ledsAssert{};
         ActionSet ledsDeAssert{};
 
-        auto group = "/xyz/openbmc_project/ledmanager/groups/MultipleLedsBSet";
-        auto result = manager.setGroupState(group, true, ledsAssert,
-                                            ledsDeAssert);
+        static constexpr auto group =
+            "/xyz/openbmc_project/ledmanager/groups/MultipleLedsBSet";
+        auto result =
+            manager.setGroupState(group, true, ledsAssert, ledsDeAssert);
         EXPECT_EQ(true, result);
 
         // Need just the ledsAssserted populated with these.
@@ -662,9 +680,10 @@ TEST_F(LedTest, asserttwoGroupsWithOneComonLEDOnOneLEDBlinkPriorityAndDeAssertA)
         ActionSet ledsAssert{};
         ActionSet ledsDeAssert{};
 
-        auto group = "/xyz/openbmc_project/ledmanager/groups/MultipleLedsASet";
-        auto result = manager.setGroupState(group, false, ledsAssert,
-                                            ledsDeAssert);
+        static constexpr auto group =
+            "/xyz/openbmc_project/ledmanager/groups/MultipleLedsASet";
+        auto result =
+            manager.setGroupState(group, false, ledsAssert, ledsDeAssert);
         EXPECT_EQ(false, result);
 
         // Need just the ledsDeAssserted populated with these.
@@ -709,9 +728,10 @@ TEST_F(LedTest, asserttwoGroupsWithOneComonLEDOnOneLEDOnPriorityAndDeAssertA)
         ActionSet ledsAssert{};
         ActionSet ledsDeAssert{};
 
-        auto group = "/xyz/openbmc_project/ledmanager/groups/MultipleLedsASet";
-        auto result = manager.setGroupState(group, true, ledsAssert,
-                                            ledsDeAssert);
+        static constexpr auto group =
+            "/xyz/openbmc_project/ledmanager/groups/MultipleLedsASet";
+        auto result =
+            manager.setGroupState(group, true, ledsAssert, ledsDeAssert);
         EXPECT_EQ(true, result);
 
         // Need just the ledsAssserted populated with these.
@@ -738,9 +758,10 @@ TEST_F(LedTest, asserttwoGroupsWithOneComonLEDOnOneLEDOnPriorityAndDeAssertA)
         ActionSet ledsAssert{};
         ActionSet ledsDeAssert{};
 
-        auto group = "/xyz/openbmc_project/ledmanager/groups/MultipleLedsBSet";
-        auto result = manager.setGroupState(group, true, ledsAssert,
-                                            ledsDeAssert);
+        static constexpr auto group =
+            "/xyz/openbmc_project/ledmanager/groups/MultipleLedsBSet";
+        auto result =
+            manager.setGroupState(group, true, ledsAssert, ledsDeAssert);
         EXPECT_EQ(true, result);
 
         // Need just the ledsAssserted populated with these.
@@ -767,9 +788,10 @@ TEST_F(LedTest, asserttwoGroupsWithOneComonLEDOnOneLEDOnPriorityAndDeAssertA)
         ActionSet ledsAssert{};
         ActionSet ledsDeAssert{};
 
-        auto group = "/xyz/openbmc_project/ledmanager/groups/MultipleLedsASet";
-        auto result = manager.setGroupState(group, false, ledsAssert,
-                                            ledsDeAssert);
+        static constexpr auto group =
+            "/xyz/openbmc_project/ledmanager/groups/MultipleLedsASet";
+        auto result =
+            manager.setGroupState(group, false, ledsAssert, ledsDeAssert);
         EXPECT_EQ(false, result);
 
         // Need just the ledsDeAssserted populated with these.
@@ -802,9 +824,10 @@ TEST_F(LedTest, asserttwoGroupsWithOneComonLEDOnOneLEDOnPriorityAndDeAssertB)
         ActionSet ledsAssert{};
         ActionSet ledsDeAssert{};
 
-        auto group = "/xyz/openbmc_project/ledmanager/groups/MultipleLedsASet";
-        auto result = manager.setGroupState(group, true, ledsAssert,
-                                            ledsDeAssert);
+        static constexpr auto group =
+            "/xyz/openbmc_project/ledmanager/groups/MultipleLedsASet";
+        auto result =
+            manager.setGroupState(group, true, ledsAssert, ledsDeAssert);
         EXPECT_EQ(true, result);
 
         // Need just the ledsAssserted populated with these.
@@ -831,9 +854,10 @@ TEST_F(LedTest, asserttwoGroupsWithOneComonLEDOnOneLEDOnPriorityAndDeAssertB)
         ActionSet ledsAssert{};
         ActionSet ledsDeAssert{};
 
-        auto group = "/xyz/openbmc_project/ledmanager/groups/MultipleLedsBSet";
-        auto result = manager.setGroupState(group, true, ledsAssert,
-                                            ledsDeAssert);
+        static constexpr auto group =
+            "/xyz/openbmc_project/ledmanager/groups/MultipleLedsBSet";
+        auto result =
+            manager.setGroupState(group, true, ledsAssert, ledsDeAssert);
         EXPECT_EQ(true, result);
 
         // Need just the ledsAssserted populated with these.
@@ -860,9 +884,10 @@ TEST_F(LedTest, asserttwoGroupsWithOneComonLEDOnOneLEDOnPriorityAndDeAssertB)
         ActionSet ledsAssert{};
         ActionSet ledsDeAssert{};
 
-        auto group = "/xyz/openbmc_project/ledmanager/groups/MultipleLedsBSet";
-        auto result = manager.setGroupState(group, false, ledsAssert,
-                                            ledsDeAssert);
+        static constexpr auto group =
+            "/xyz/openbmc_project/ledmanager/groups/MultipleLedsBSet";
+        auto result =
+            manager.setGroupState(group, false, ledsAssert, ledsDeAssert);
         EXPECT_EQ(false, result);
 
         // Need just the ledsDeAssserted populated with these.
@@ -907,9 +932,10 @@ TEST_F(LedTest, assertTwoGroupsWithMultiplComonLEDOnAndDeAssert)
         ActionSet ledsAssert{};
         ActionSet ledsDeAssert{};
 
-        auto group = "/xyz/openbmc_project/ledmanager/groups/MultipleLedsBSet";
-        auto result = manager.setGroupState(group, true, ledsAssert,
-                                            ledsDeAssert);
+        static constexpr auto group =
+            "/xyz/openbmc_project/ledmanager/groups/MultipleLedsBSet";
+        auto result =
+            manager.setGroupState(group, true, ledsAssert, ledsDeAssert);
         EXPECT_EQ(true, result);
 
         // Need just the ledsAssserted populated with these.
@@ -938,9 +964,10 @@ TEST_F(LedTest, assertTwoGroupsWithMultiplComonLEDOnAndDeAssert)
         ActionSet ledsAssert{};
         ActionSet ledsDeAssert{};
 
-        auto group = "/xyz/openbmc_project/ledmanager/groups/MultipleLedsASet";
-        auto result = manager.setGroupState(group, true, ledsAssert,
-                                            ledsDeAssert);
+        static constexpr auto group =
+            "/xyz/openbmc_project/ledmanager/groups/MultipleLedsASet";
+        auto result =
+            manager.setGroupState(group, true, ledsAssert, ledsDeAssert);
         EXPECT_EQ(true, result);
 
         // Need just the ledsAssserted populated with these.
@@ -963,9 +990,10 @@ TEST_F(LedTest, assertTwoGroupsWithMultiplComonLEDOnAndDeAssert)
         ActionSet ledsAssert{};
         ActionSet ledsDeAssert{};
 
-        auto group = "/xyz/openbmc_project/ledmanager/groups/MultipleLedsBSet";
-        auto result = manager.setGroupState(group, false, ledsAssert,
-                                            ledsDeAssert);
+        static constexpr auto group =
+            "/xyz/openbmc_project/ledmanager/groups/MultipleLedsBSet";
+        auto result =
+            manager.setGroupState(group, false, ledsAssert, ledsDeAssert);
         EXPECT_EQ(false, result);
 
         // Need just the ledsDeAssserted populated with these.
@@ -996,9 +1024,10 @@ TEST_F(LedTest, assertTwoGroupsWithMultipleComonLEDInDifferentStateBandA)
         ActionSet ledsAssert{};
         ActionSet ledsDeAssert{};
 
-        auto group = "/xyz/openbmc_project/ledmanager/groups/MultipleLedsBSet";
-        auto result = manager.setGroupState(group, true, ledsAssert,
-                                            ledsDeAssert);
+        static constexpr auto group =
+            "/xyz/openbmc_project/ledmanager/groups/MultipleLedsBSet";
+        auto result =
+            manager.setGroupState(group, true, ledsAssert, ledsDeAssert);
         EXPECT_EQ(true, result);
 
         // Need just the ledsAssserted populated with these.
@@ -1027,9 +1056,10 @@ TEST_F(LedTest, assertTwoGroupsWithMultipleComonLEDInDifferentStateBandA)
         ActionSet ledsAssert{};
         ActionSet ledsDeAssert{};
 
-        auto group = "/xyz/openbmc_project/ledmanager/groups/MultipleLedsASet";
-        auto result = manager.setGroupState(group, true, ledsAssert,
-                                            ledsDeAssert);
+        static constexpr auto group =
+            "/xyz/openbmc_project/ledmanager/groups/MultipleLedsASet";
+        auto result =
+            manager.setGroupState(group, true, ledsAssert, ledsDeAssert);
         EXPECT_EQ(true, result);
 
         // Need just the ledsAssserted populated with these
@@ -1062,9 +1092,10 @@ TEST_F(LedTest, assertTwoGroupsWithMultipleComonLEDInDifferentStateAtoB)
         ActionSet ledsAssert{};
         ActionSet ledsDeAssert{};
 
-        auto group = "/xyz/openbmc_project/ledmanager/groups/MultipleLedsASet";
-        auto result = manager.setGroupState(group, true, ledsAssert,
-                                            ledsDeAssert);
+        static constexpr auto group =
+            "/xyz/openbmc_project/ledmanager/groups/MultipleLedsASet";
+        auto result =
+            manager.setGroupState(group, true, ledsAssert, ledsDeAssert);
         EXPECT_EQ(true, result);
 
         // Need just the ledsAssserted populated with these.'Two' gets to Blink
@@ -1094,9 +1125,10 @@ TEST_F(LedTest, assertTwoGroupsWithMultipleComonLEDInDifferentStateAtoB)
         ActionSet ledsAssert{};
         ActionSet ledsDeAssert{};
 
-        auto group = "/xyz/openbmc_project/ledmanager/groups/MultipleLedsBSet";
-        auto result = manager.setGroupState(group, true, ledsAssert,
-                                            ledsDeAssert);
+        static constexpr auto group =
+            "/xyz/openbmc_project/ledmanager/groups/MultipleLedsBSet";
+        auto result =
+            manager.setGroupState(group, true, ledsAssert, ledsDeAssert);
         EXPECT_EQ(true, result);
 
         // Need just the ledsAssserted populated with these.
@@ -1134,9 +1166,10 @@ TEST_F(LedTest,
         ActionSet ledsAssert{};
         ActionSet ledsDeAssert{};
 
-        auto group = "/xyz/openbmc_project/ledmanager/groups/MultipleLedsASet";
-        auto result = manager.setGroupState(group, true, ledsAssert,
-                                            ledsDeAssert);
+        static constexpr auto group =
+            "/xyz/openbmc_project/ledmanager/groups/MultipleLedsASet";
+        auto result =
+            manager.setGroupState(group, true, ledsAssert, ledsDeAssert);
         EXPECT_EQ(true, result);
 
         // Need just the ledsAssserted populated with these.
@@ -1165,9 +1198,10 @@ TEST_F(LedTest,
         ActionSet ledsAssert{};
         ActionSet ledsDeAssert{};
 
-        auto group = "/xyz/openbmc_project/ledmanager/groups/MultipleLedsBSet";
-        auto result = manager.setGroupState(group, true, ledsAssert,
-                                            ledsDeAssert);
+        static constexpr auto group =
+            "/xyz/openbmc_project/ledmanager/groups/MultipleLedsBSet";
+        auto result =
+            manager.setGroupState(group, true, ledsAssert, ledsDeAssert);
         EXPECT_EQ(true, result);
 
         // Need just the ledsAssserted populated with these.
@@ -1196,9 +1230,10 @@ TEST_F(LedTest,
         ActionSet ledsAssert{};
         ActionSet ledsDeAssert{};
 
-        auto group = "/xyz/openbmc_project/ledmanager/groups/MultipleLedsBSet";
-        auto result = manager.setGroupState(group, false, ledsAssert,
-                                            ledsDeAssert);
+        static constexpr auto group =
+            "/xyz/openbmc_project/ledmanager/groups/MultipleLedsBSet";
+        auto result =
+            manager.setGroupState(group, false, ledsAssert, ledsDeAssert);
         EXPECT_EQ(false, result);
 
         // Need just the ledsAssserted populated with these.
@@ -1237,9 +1272,10 @@ TEST_F(LedTest,
         ActionSet ledsAssert{};
         ActionSet ledsDeAssert{};
 
-        auto group = "/xyz/openbmc_project/ledmanager/groups/MultipleLedsASet";
-        auto result = manager.setGroupState(group, false, ledsAssert,
-                                            ledsDeAssert);
+        static constexpr auto group =
+            "/xyz/openbmc_project/ledmanager/groups/MultipleLedsASet";
+        auto result =
+            manager.setGroupState(group, false, ledsAssert, ledsDeAssert);
         EXPECT_EQ(false, result);
 
         // Need just the ledsAssserted populated with these.
@@ -1268,9 +1304,10 @@ TEST_F(LedTest,
         ActionSet ledsAssert{};
         ActionSet ledsDeAssert{};
 
-        auto group = "/xyz/openbmc_project/ledmanager/groups/MultipleLedsASet";
-        auto result = manager.setGroupState(group, false, ledsAssert,
-                                            ledsDeAssert);
+        static constexpr auto group =
+            "/xyz/openbmc_project/ledmanager/groups/MultipleLedsASet";
+        auto result =
+            manager.setGroupState(group, false, ledsAssert, ledsDeAssert);
         EXPECT_EQ(false, result);
         EXPECT_EQ(0, ledsDeAssert.size());
         EXPECT_EQ(0, ledsAssert.size());
@@ -1290,9 +1327,10 @@ TEST_F(LedTest,
         ActionSet ledsAssert{};
         ActionSet ledsDeAssert{};
 
-        auto group = "/xyz/openbmc_project/ledmanager/groups/MultipleLedsASet";
-        auto result = manager.setGroupState(group, true, ledsAssert,
-                                            ledsDeAssert);
+        static constexpr auto group =
+            "/xyz/openbmc_project/ledmanager/groups/MultipleLedsASet";
+        auto result =
+            manager.setGroupState(group, true, ledsAssert, ledsDeAssert);
         EXPECT_EQ(true, result);
 
         // Need just the ledsAssserted populated with these.
@@ -1323,9 +1361,10 @@ TEST_F(LedTest,
         ActionSet ledsAssert{};
         ActionSet ledsDeAssert{};
 
-        auto group = "/xyz/openbmc_project/ledmanager/groups/MultipleLedsBSet";
-        auto result = manager.setGroupState(group, true, ledsAssert,
-                                            ledsDeAssert);
+        static constexpr auto group =
+            "/xyz/openbmc_project/ledmanager/groups/MultipleLedsBSet";
+        auto result =
+            manager.setGroupState(group, true, ledsAssert, ledsDeAssert);
         EXPECT_EQ(true, result);
 
         // Need just the ledsAssserted populated with these.
@@ -1355,9 +1394,10 @@ TEST_F(LedTest,
         ActionSet ledsAssert{};
         ActionSet ledsDeAssert{};
 
-        auto group = "/xyz/openbmc_project/ledmanager/groups/MultipleLedsASet";
-        auto result = manager.setGroupState(group, false, ledsAssert,
-                                            ledsDeAssert);
+        static constexpr auto group =
+            "/xyz/openbmc_project/ledmanager/groups/MultipleLedsASet";
+        auto result =
+            manager.setGroupState(group, false, ledsAssert, ledsDeAssert);
         EXPECT_EQ(false, result);
 
         // Need just the ledsDeAsssert populated with these.
@@ -1402,9 +1442,10 @@ TEST_F(
         ActionSet ledsAssert{};
         ActionSet ledsDeAssert{};
 
-        auto group = "/xyz/openbmc_project/ledmanager/groups/MultipleLedsASet";
-        auto result = manager.setGroupState(group, true, ledsAssert,
-                                            ledsDeAssert);
+        static constexpr auto group =
+            "/xyz/openbmc_project/ledmanager/groups/MultipleLedsASet";
+        auto result =
+            manager.setGroupState(group, true, ledsAssert, ledsDeAssert);
         EXPECT_EQ(true, result);
 
         // Need just the ledsAssserted populated with these.
@@ -1435,9 +1476,10 @@ TEST_F(
         ActionSet ledsAssert{};
         ActionSet ledsDeAssert{};
 
-        auto group = "/xyz/openbmc_project/ledmanager/groups/MultipleLedsBSet";
-        auto result = manager.setGroupState(group, true, ledsAssert,
-                                            ledsDeAssert);
+        static constexpr auto group =
+            "/xyz/openbmc_project/ledmanager/groups/MultipleLedsBSet";
+        auto result =
+            manager.setGroupState(group, true, ledsAssert, ledsDeAssert);
         EXPECT_EQ(true, result);
 
         // Need just the ledsAssserted populated with these.
@@ -1467,9 +1509,10 @@ TEST_F(
         ActionSet ledsAssert{};
         ActionSet ledsDeAssert{};
 
-        auto group = "/xyz/openbmc_project/ledmanager/groups/MultipleLedsBSet";
-        auto result = manager.setGroupState(group, false, ledsAssert,
-                                            ledsDeAssert);
+        static constexpr auto group =
+            "/xyz/openbmc_project/ledmanager/groups/MultipleLedsBSet";
+        auto result =
+            manager.setGroupState(group, false, ledsAssert, ledsDeAssert);
         EXPECT_EQ(false, result);
 
         // Need just the ledsDeAsssert populated with these.
@@ -1513,9 +1556,10 @@ TEST_F(LedTest,
         ActionSet ledsAssert{};
         ActionSet ledsDeAssert{};
 
-        auto group = "/xyz/openbmc_project/ledmanager/groups/MultipleLedsBSet";
-        auto result = manager.setGroupState(group, true, ledsAssert,
-                                            ledsDeAssert);
+        static constexpr auto group =
+            "/xyz/openbmc_project/ledmanager/groups/MultipleLedsBSet";
+        auto result =
+            manager.setGroupState(group, true, ledsAssert, ledsDeAssert);
         EXPECT_EQ(true, result);
 
         // Need just the ledsAssserted populated with these.
@@ -1546,9 +1590,10 @@ TEST_F(LedTest,
         ActionSet ledsAssert{};
         ActionSet ledsDeAssert{};
 
-        auto group = "/xyz/openbmc_project/ledmanager/groups/MultipleLedsASet";
-        auto result = manager.setGroupState(group, true, ledsAssert,
-                                            ledsDeAssert);
+        static constexpr auto group =
+            "/xyz/openbmc_project/ledmanager/groups/MultipleLedsASet";
+        auto result =
+            manager.setGroupState(group, true, ledsAssert, ledsDeAssert);
         EXPECT_EQ(true, result);
 
         // Need just the ledsAssserted populated with these.
@@ -1589,9 +1634,10 @@ TEST_F(
         ActionSet ledsAssert{};
         ActionSet ledsDeAssert{};
 
-        auto group = "/xyz/openbmc_project/ledmanager/groups/MultipleLedsBSet";
-        auto result = manager.setGroupState(group, true, ledsAssert,
-                                            ledsDeAssert);
+        static constexpr auto group =
+            "/xyz/openbmc_project/ledmanager/groups/MultipleLedsBSet";
+        auto result =
+            manager.setGroupState(group, true, ledsAssert, ledsDeAssert);
         EXPECT_EQ(true, result);
 
         // Need just the ledsAssserted populated with these.
@@ -1622,9 +1668,10 @@ TEST_F(
         ActionSet ledsAssert{};
         ActionSet ledsDeAssert{};
 
-        auto group = "/xyz/openbmc_project/ledmanager/groups/MultipleLedsASet";
-        auto result = manager.setGroupState(group, true, ledsAssert,
-                                            ledsDeAssert);
+        static constexpr auto group =
+            "/xyz/openbmc_project/ledmanager/groups/MultipleLedsASet";
+        auto result =
+            manager.setGroupState(group, true, ledsAssert, ledsDeAssert);
         EXPECT_EQ(true, result);
 
         // Need just the ledsAssserted populated with these.
@@ -1654,9 +1701,10 @@ TEST_F(
         ActionSet ledsAssert{};
         ActionSet ledsDeAssert{};
 
-        auto group = "/xyz/openbmc_project/ledmanager/groups/MultipleLedsASet";
-        auto result = manager.setGroupState(group, false, ledsAssert,
-                                            ledsDeAssert);
+        static constexpr auto group =
+            "/xyz/openbmc_project/ledmanager/groups/MultipleLedsASet";
+        auto result =
+            manager.setGroupState(group, false, ledsAssert, ledsDeAssert);
         EXPECT_EQ(false, result);
 
         // Need just the ledsAssserted populated with these.
@@ -1701,9 +1749,10 @@ TEST_F(LedTest,
         ActionSet ledsAssert{};
         ActionSet ledsDeAssert{};
 
-        auto group = "/xyz/openbmc_project/ledmanager/groups/MultipleLedsBSet";
-        auto result = manager.setGroupState(group, true, ledsAssert,
-                                            ledsDeAssert);
+        static constexpr auto group =
+            "/xyz/openbmc_project/ledmanager/groups/MultipleLedsBSet";
+        auto result =
+            manager.setGroupState(group, true, ledsAssert, ledsDeAssert);
         EXPECT_EQ(true, result);
 
         // Need just the ledsAssserted populated with these.
@@ -1734,9 +1783,10 @@ TEST_F(LedTest,
         ActionSet ledsAssert{};
         ActionSet ledsDeAssert{};
 
-        auto group = "/xyz/openbmc_project/ledmanager/groups/MultipleLedsASet";
-        auto result = manager.setGroupState(group, true, ledsAssert,
-                                            ledsDeAssert);
+        static constexpr auto group =
+            "/xyz/openbmc_project/ledmanager/groups/MultipleLedsASet";
+        auto result =
+            manager.setGroupState(group, true, ledsAssert, ledsDeAssert);
         EXPECT_EQ(true, result);
 
         // Need just the ledsAssserted populated with these.
@@ -1766,9 +1816,10 @@ TEST_F(LedTest,
         ActionSet ledsAssert{};
         ActionSet ledsDeAssert{};
 
-        auto group = "/xyz/openbmc_project/ledmanager/groups/MultipleLedsBSet";
-        auto result = manager.setGroupState(group, false, ledsAssert,
-                                            ledsDeAssert);
+        static constexpr auto group =
+            "/xyz/openbmc_project/ledmanager/groups/MultipleLedsBSet";
+        auto result =
+            manager.setGroupState(group, false, ledsAssert, ledsDeAssert);
         EXPECT_EQ(false, result);
 
         // Need just the ledsAssserted populated with these.
@@ -1808,9 +1859,10 @@ TEST_F(LedTest,
         ActionSet ledsAssert{};
         ActionSet ledsDeAssert{};
 
-        auto group = "/xyz/openbmc_project/ledmanager/groups/MultipleLedsASet";
-        auto result = manager.setGroupState(group, false, ledsAssert,
-                                            ledsDeAssert);
+        static constexpr auto group =
+            "/xyz/openbmc_project/ledmanager/groups/MultipleLedsASet";
+        auto result =
+            manager.setGroupState(group, false, ledsAssert, ledsDeAssert);
         EXPECT_EQ(false, result);
 
         // Need just the ledsAssserted populated with these.
@@ -1841,9 +1893,10 @@ TEST_F(LedTest,
         ActionSet ledsAssert{};
         ActionSet ledsDeAssert{};
 
-        auto group = "/xyz/openbmc_project/ledmanager/groups/MultipleLedsBSet";
-        auto result = manager.setGroupState(group, false, ledsAssert,
-                                            ledsDeAssert);
+        static constexpr auto group =
+            "/xyz/openbmc_project/ledmanager/groups/MultipleLedsBSet";
+        auto result =
+            manager.setGroupState(group, false, ledsAssert, ledsDeAssert);
         EXPECT_EQ(false, result);
         EXPECT_EQ(0, ledsDeAssert.size());
         EXPECT_EQ(0, ledsAssert.size());
