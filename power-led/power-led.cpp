@@ -1,7 +1,7 @@
 #include "power-led-match.hpp"
 
 #include <CLI/CLI.hpp>
-#include <boost/asio/io_service.hpp>
+#include <boost/asio/io_context.hpp>
 #include <nlohmann/json.hpp>
 #include <phosphor-logging/elog-errors.hpp>
 #include <phosphor-logging/lg2.hpp>
@@ -45,7 +45,7 @@ std::atomic<bool> started_post = false;
 std::atomic<bool> ended_post = false;
 std::atomic<bool> host_power_on = false;
 
-boost::asio::io_service io;
+boost::asio::io_context io;
 std::shared_ptr<sdbusplus::asio::connection> conn;
 
 static void updatePowerLed();
