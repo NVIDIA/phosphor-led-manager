@@ -7,6 +7,7 @@
 #else
 #include "led-gen.hpp"
 #endif
+#include "config-validator.hpp"
 #include "manager.hpp"
 #include "serialize.hpp"
 #include "utils.hpp"
@@ -42,6 +43,8 @@ int main(int argc, char** argv)
     auto systemLedMap = getSystemLedMap(configFile);
 #endif
 
+    phosphor::led::validateConfigV1(systemLedMap);
+
     /** @brief Group manager object */
     phosphor::led::Manager manager(bus, systemLedMap, event);
 
@@ -63,26 +66,29 @@ int main(int argc, char** argv)
     phosphor::led::LampTest lampTest(event, manager);
 
     // Clear leds triggered by lamp test in previous boot
-    lampTest.clearLamps();
+    phosphor::led::LampTest::clearLamps();
 
     groups.emplace_back(std::make_unique<phosphor::led::Group>(
         bus, LAMP_TEST_OBJECT, manager, serializePtr,
-        std::bind(std::mem_fn(&phosphor::led::LampTest::requestHandler),
-                  &lampTest, std::placeholders::_1, std::placeholders::_2)));
+        [&lampTest](auto&& arg1, auto&& arg2) {
+            return lampTest.requestHandler(std::forward<decltype(arg1)>(arg1),
+                                           std::forward<decltype(arg2)>(arg2));
+        }));
 
     // Register a lamp test method in the manager class, and call this method
     // when the lamp test is started
-    manager.setLampTestCallBack(
-        std::bind(std::mem_fn(&phosphor::led::LampTest::processLEDUpdates),
-                  &lampTest, std::placeholders::_1, std::placeholders::_2));
+    manager.setLampTestCallBack([&lampTest](auto&& arg1, auto&& arg2) {
+        return lampTest.processLEDUpdates(std::forward<decltype(arg1)>(arg1),
+                                          std::forward<decltype(arg2)>(arg2));
+    });
 #endif
 
     /** Now create so many dbus objects as there are groups */
     std::ranges::transform(systemLedMap, std::back_inserter(groups),
                            [&bus, &manager, serializePtr](auto& grp) {
-        return std::make_unique<phosphor::led::Group>(bus, grp.first, manager,
-                                                      serializePtr);
-    });
+                               return std::make_unique<phosphor::led::Group>(
+                                   bus, grp.first, manager, serializePtr);
+                           });
 
     // Attach the bus to sd_event to service user requests
     bus.attach_event(event.get(), SD_EVENT_PRIORITY_NORMAL);

@@ -91,7 +91,7 @@ void action(sdbusplus::bus_t& bus, const std::string& path, bool assert)
         return;
     }
 
-    auto pos = path.rfind("/");
+    auto pos = path.rfind('/');
     if (pos == std::string::npos)
     {
         using namespace xyz::openbmc_project::Common;
@@ -164,15 +164,10 @@ void Add::created(sdbusplus::message_t& msg)
     }
 
     auto& assocs = std::get<AssociationList>(attr->second);
-    if (assocs.empty())
-    {
-        // No associations skip
-        return;
-    }
 
     for (const auto& item : assocs)
     {
-        if (std::get<1>(item).compare(CALLOUT_REV_ASSOCIATION) == 0)
+        if (std::get<1>(item) == CALLOUT_REV_ASSOCIATION)
         {
             removeWatches.emplace_back(
                 std::make_unique<Remove>(bus, std::get<2>(item)));
@@ -244,15 +239,10 @@ void Add::processExistingCallouts(sdbusplus::bus_t& bus)
             continue;
         }
         auto& assocs = std::get<AssociationList>(assoc);
-        if (assocs.empty())
-        {
-            // no associations, skip
-            continue;
-        }
 
         for (const auto& item : assocs)
         {
-            if (std::get<1>(item).compare(CALLOUT_REV_ASSOCIATION) == 0)
+            if (std::get<1>(item) == CALLOUT_REV_ASSOCIATION)
             {
                 removeWatches.emplace_back(
                     std::make_unique<Remove>(bus, std::get<2>(item)));

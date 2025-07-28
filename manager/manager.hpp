@@ -1,5 +1,6 @@
 #pragma once
 
+#include "grouplayout.hpp"
 #include "ledlayout.hpp"
 #include "utils.hpp"
 
@@ -9,6 +10,9 @@
 #include <set>
 #include <string>
 #include <unordered_map>
+
+// to better see what the string is representing
+using LedName = std::string;
 
 namespace phosphor
 {
@@ -45,14 +49,7 @@ class Manager
         // this case its {fan0, 1, 1}
         if (left.name == right.name)
         {
-            if (left.action == right.action)
-            {
-                return false;
-            }
-            else
-            {
-                return true;
-            }
+            return left.action != right.action;
         }
         return left.name < right.name;
     }
@@ -83,11 +80,15 @@ class Manager
     Manager(
         sdbusplus::bus_t& bus, const GroupMap& ledLayout,
         const sdeventplus::Event& event = sdeventplus::Event::get_default()) :
-        ledMap(ledLayout),
-        bus(bus), timer(event, [this](auto&) { driveLedsHandler(); })
+        ledMap(ledLayout), bus(bus),
+        timer(event, [this](auto&) { driveLedsHandler(); })
     {
         // Nothing here
     }
+
+    /* create the resulting map from all currently asserted groups */
+    static auto getNewMap(std::set<const Layout::GroupLayout*> assertedGroups)
+        -> std::map<LedName, Layout::LedAction>;
 
     /** @brief Given a group name, applies the action on the group
      *
@@ -122,8 +123,9 @@ class Manager
      *
      *  @return:              -  0: success, -1: LED set failed
      */
-    int drivePhysicalLED(const std::string& objPath, Layout::Action action,
-                         uint8_t dutyOn, const uint16_t period);
+    static int drivePhysicalLED(const std::string& objPath,
+                                Layout::Action action, uint8_t dutyOn,
+                                uint16_t period);
 
     /** @brief Set lamp test callback when enabled lamp test.
      *
@@ -138,21 +140,13 @@ class Manager
     sdbusplus::bus_t& bus;
 
     /** Map of physical LED path to service name */
-    std::unordered_map<std::string, std::string> phyLeds{};
-
-    /** DBusHandler class handles the D-Bus operations */
-    DBusHandler dBusHandler;
+    std::unordered_map<std::string, std::string> phyLeds;
 
     /** @brief Pointers to groups that are in asserted state */
-    std::set<const ActionSet*> assertedGroups;
+    std::set<const Layout::GroupLayout*> assertedGroups;
 
-    /** @brief Contains the highest priority actions for all
-     *         asserted LEDs.
-     */
-    ActionSet currentState;
-
-    /** @brief Contains the set of all actions for asserted LEDs */
-    ActionSet combinedState;
+    /** Map of led name to current state */
+    std::map<std::string, Layout::LedAction> ledStateMap;
 
     /** @brief Custom callback when enabled lamp test */
     std::function<bool(ActionSet& ledsAssert, ActionSet& ledsDeAssert)>

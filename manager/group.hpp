@@ -14,11 +14,8 @@ namespace phosphor
 namespace led
 {
 
-namespace
-{
 using GroupInherit = sdbusplus::server::object_t<
     sdbusplus::xyz::openbmc_project::Led::server::Group>;
-}
 
 /** @class Group
  *  @brief Manages group of LEDs and applies action on the elements of group
@@ -27,11 +24,11 @@ class Group : public GroupInherit
 {
   public:
     Group() = delete;
-    ~Group() = default;
+    ~Group() override = default;
     Group(const Group&) = delete;
     Group& operator=(const Group&) = delete;
-    Group(Group&&) = default;
-    Group& operator=(Group&&) = default;
+    Group(Group&&) = delete;
+    Group& operator=(Group&&) = delete;
 
     /** @brief Constructs LED Group
      *

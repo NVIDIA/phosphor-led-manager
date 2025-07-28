@@ -41,8 +41,7 @@ class JsonConfig
             sdbusplus::bus::match::rules::interfacesAdded() +
                 sdbusplus::bus::match::rules::sender(
                     "xyz.openbmc_project.EntityManager"),
-            std::bind(&JsonConfig::ifacesAddedCallback, this,
-                      std::placeholders::_1));
+            [this](sdbusplus::message_t& m) { ifacesAddedCallback(m); });
         getFilePath();
 
         if (!confFile.empty())
@@ -70,18 +69,18 @@ class JsonConfig
      */
     bool filePathExists(const std::vector<std::string>& names)
     {
-        auto it = std::find_if(names.begin(), names.end(),
-                               [this](const auto& name) {
-            auto configFileName = name + ".json";
-            auto configFilePath = fs::path{confBasePath} / configFileName;
-            if (fs::exists(configFilePath))
-            {
-                confFile = configFilePath;
-                return true;
-            }
-            return false;
-        });
-        return it == names.end() ? false : true;
+        auto it =
+            std::find_if(names.begin(), names.end(), [this](const auto& name) {
+                auto configFileName = name + ".json";
+                auto configFilePath = fs::path{confBasePath} / configFileName;
+                if (fs::exists(configFilePath))
+                {
+                    confFile = configFilePath;
+                    return true;
+                }
+                return false;
+            });
+        return it != names.end();
     }
 
     /**
@@ -160,14 +159,14 @@ class JsonConfig
         try
         {
             // Get all objects implementing the compatible interface
-            auto objects = dBusHandler.getSubTreePaths("/",
-                                                       confCompatibleInterface);
+            auto objects = phosphor::led::utils::DBusHandler::getSubTreePaths(
+                "/", confCompatibleInterface);
             for (const auto& path : objects)
             {
                 try
                 {
                     // Retrieve json config compatible relative path locations
-                    auto value = dBusHandler.getProperty(
+                    auto value = phosphor::led::utils::DBusHandler::getProperty(
                         path, confCompatibleInterface, confCompatibleProperty);
 
                     auto confCompatValues =
@@ -203,7 +202,6 @@ class JsonConfig
         return;
     }
 
-  private:
     /**
      * @brief sd event handler.
      */
@@ -220,9 +218,6 @@ class JsonConfig
      * interface to show up.
      */
     std::unique_ptr<sdbusplus::bus::match_t> match;
-
-    /** DBusHandler class handles the D-Bus operations */
-    utils::DBusHandler dBusHandler;
 };
 
 /** Blocking call to find the JSON Config from DBus. */
