@@ -53,8 +53,8 @@ void setLedGroup(const std::shared_ptr<sdbusplus::asio::connection>& conn,
                  const std::string& name, bool on);
 
 // Will throw an exception if number is not formatted as a list of uint8_t
-static std::vector<uint8_t>
-    convertStringVectToHexVect(std::vector<std::string> input)
+static std::vector<uint8_t> convertStringVectToHexVect(
+    std::vector<std::string> input)
 {
     std::vector<uint8_t> result;
     result.reserve(input.size());
