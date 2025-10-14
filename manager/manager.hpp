@@ -7,6 +7,7 @@
 #include <sdeventplus/event.hpp>
 #include <sdeventplus/utility/timer.hpp>
 
+#include <chrono>
 #include <set>
 #include <string>
 #include <unordered_map>
@@ -78,10 +79,9 @@ class Manager
      *  @param [in] Event    - sd event handler
      */
     Manager(
-        sdbusplus::bus_t& bus, const GroupMap& ledLayout,
+        sdbusplus::bus_t&, const GroupMap& ledLayout,
         const sdeventplus::Event& event = sdeventplus::Event::get_default()) :
-        ledMap(ledLayout), bus(bus),
-        timer(event, [this](auto&) { driveLedsHandler(); })
+        ledMap(ledLayout), timer(event, [this](auto&) { driveLedsHandler(); })
     {
         // Nothing here
     }
@@ -123,9 +123,8 @@ class Manager
      *
      *  @return:              -  0: success, -1: LED set failed
      */
-    static int drivePhysicalLED(const std::string& objPath,
-                                Layout::Action action, uint8_t dutyOn,
-                                uint16_t period);
+    int drivePhysicalLED(const std::string& objPath, Layout::Action action,
+                         uint8_t dutyOn, uint16_t period);
 
     /** @brief Set lamp test callback when enabled lamp test.
      *
@@ -136,9 +135,6 @@ class Manager
             callBack);
 
   private:
-    /** @brief sdbusplus handler */
-    sdbusplus::bus_t& bus;
-
     /** Map of physical LED path to service name */
     std::unordered_map<std::string, std::string> phyLeds;
 
@@ -160,6 +156,11 @@ class Manager
 
     /** @brief Contains the required set of deassert LEDs action */
     ActionSet reqLedsDeAssert;
+
+    /** @brief Map to store the last error time for physical LED paths */
+    std::unordered_map<std::string,
+                       std::chrono::time_point<std::chrono::steady_clock>>
+        physicalLEDErrors;
 
     /** @brief LEDs handler callback */
     void driveLedsHandler();

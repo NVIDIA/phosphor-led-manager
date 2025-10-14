@@ -7,8 +7,10 @@
 #include <xyz/openbmc_project/Led/Physical/server.hpp>
 
 #include <algorithm>
+#include <chrono>
 #include <iostream>
 #include <string>
+
 namespace phosphor
 {
 namespace led
@@ -74,8 +76,8 @@ static std::map<LedName, Layout::LedAction> getNewMapWithLEDPriorities(
 }
 
 // create the resulting new map from all currently asserted groups
-std::map<LedName, Layout::LedAction>
-    Manager::getNewMap(std::set<const Layout::GroupLayout*> assertedGroups)
+std::map<LedName, Layout::LedAction> Manager::getNewMap(
+    std::set<const Layout::GroupLayout*> assertedGroups)
 {
     std::map<LedName, Layout::LedAction> newState;
 
@@ -232,9 +234,24 @@ int Manager::drivePhysicalLED(const std::string& objPath, Layout::Action action,
     }
     catch (const sdbusplus::exception_t& e)
     {
+        // This can be a really spammy event log, so we rate limit it to once an
+        // hour per LED.
+        auto now = std::chrono::steady_clock::now();
+
+        if (auto it = physicalLEDErrors.find(objPath);
+            it != physicalLEDErrors.end())
+        {
+            using namespace std::literals::chrono_literals;
+            if ((now - it->second) < 1h)
+            {
+                return -1;
+            }
+        }
+
         lg2::error(
             "Error setting property for physical LED, ERROR = {ERROR}, OBJECT_PATH = {PATH}",
             "ERROR", e, "PATH", objPath);
+        physicalLEDErrors[objPath] = now;
         return -1;
     }
 
