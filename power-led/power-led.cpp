@@ -168,7 +168,7 @@ static void updatePostcodeStatus(std::vector<postcode_t> postcodes)
     for (auto& postcode : postcodes)
     {
         // Get the postcode
-        std::vector<uint8_t> code = std::get<1>(postcode);
+        std::vector<uint8_t> code = std::get<0>(postcode);
         // If the code is POST_start, then post has started
         if (!started_post && checkSameCode(code, POST_start) == 0)
         {

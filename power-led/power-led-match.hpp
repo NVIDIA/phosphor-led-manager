@@ -3,7 +3,7 @@
 #include <sdbusplus/server.hpp>
 #include <xyz/openbmc_project/State/Host/server.hpp>
 
-using primarycode_t = uint64_t;
+using primarycode_t = std::vector<uint8_t>;
 using secondarycode_t = std::vector<uint8_t>;
 using postcode_t = std::tuple<primarycode_t, secondarycode_t>;
 namespace StateServer = sdbusplus::xyz::openbmc_project::State::server;
