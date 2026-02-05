@@ -142,7 +142,12 @@ static int checkSameCode(std::vector<uint8_t> a, std::vector<uint8_t> b)
 
     // Advance the longer iterator so both end at the same place
     // In other words, skip the bytes that the shorter doesn't have
-    advance(longer_it, longer_code.size() - shorter_code.size() - 1);
+    // This calculation ignores the last byte of the longer code, which is the
+    // instance byte
+    if (longer_code.size() != shorter_code.size())
+    {
+        advance(longer_it, longer_code.size() - shorter_code.size() - 1);
+    }
     // Compare the elements until one doesn't match
     for (; longer_it != longer_code.end() && shorter_it != shorter_code.end();
          longer_it++, shorter_it++)
