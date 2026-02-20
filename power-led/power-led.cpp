@@ -352,7 +352,16 @@ int main(int argc, char** argv)
     }
     lg2::info("Successfully parsed power LED controller config.");
     // Initialize power status
-    host_power_on = poweredOn(bus);
+    try
+    {
+        host_power_on = poweredOn(bus);
+    }
+    catch (const sdbusplus::exception::SdBusError& e)
+    {
+        lg2::error("Failed to query the host power status.");
+        lg2::error(e.what());
+        return -1;
+    }
     // Create snooping objects for postcodes and power status
     PowerLEDMatch powerLEDmatch(bus, updatePostcodeStatus, updatePowerStatus,
                                 eventP);
