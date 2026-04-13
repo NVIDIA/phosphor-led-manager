@@ -1,8 +1,13 @@
 #include "lamptest.hpp"
 
 #include <phosphor-logging/lg2.hpp>
+#include <xyz/openbmc_project/Led/Group/common.hpp>
+#include <xyz/openbmc_project/Led/Physical/common.hpp>
 
 #include <algorithm>
+
+using LedPhysical = sdbusplus::common::xyz::openbmc_project::led::Physical;
+using LedGroup = sdbusplus::common::xyz::openbmc_project::led::Group;
 
 namespace phosphor
 {
@@ -131,7 +136,7 @@ void LampTest::storePhysicalLEDsStates()
         // Reverse intercept path, Get the name of each member of physical led
         // e.g: path = /xyz/openbmc_project/led/physical/front_fan
         //      name = front_fan
-        sdbusplus::message::object_path object_path(path);
+        sdbusplus::object_path object_path(path);
         auto name = object_path.filename();
         if (name.empty())
         {
@@ -147,8 +152,8 @@ void LampTest::storePhysicalLEDsStates()
         try
         {
             auto properties =
-                phosphor::led::utils::DBusHandler::getAllProperties(path,
-                                                                    phyLedIntf);
+                phosphor::led::utils::DBusHandler::getAllProperties(
+                    path, LedPhysical::interface);
 
             state = std::get<std::string>(properties["State"]);
             period = std::get<uint16_t>(properties["Period"]);
@@ -190,13 +195,14 @@ void LampTest::start()
     try
     {
         physicalLEDPaths = phosphor::led::utils::DBusHandler::getSubTreePaths(
-            phyLedPath, phyLedIntf);
+            phyLedPath, LedPhysical::interface);
     }
     catch (const sdbusplus::exception_t& e)
     {
         lg2::error(
             "Failed to call the SubTreePaths method: {ERROR}, ledPath: {PATH}, ledInterface: {INTERFACE}",
-            "ERROR", e, "PATH", phyLedPath, "INTERFACE", phyLedIntf);
+            "ERROR", e, "PATH", phyLedPath, "INTERFACE",
+            LedPhysical::interface);
         return;
     }
 
@@ -311,8 +317,8 @@ void LampTest::doHostLampTest(bool value)
     {
         PropertyValue assertedValue{value};
         phosphor::led::utils::DBusHandler::setProperty(
-            HOST_LAMP_TEST_OBJECT, "xyz.openbmc_project.Led.Group", "Asserted",
-            assertedValue);
+            HOST_LAMP_TEST_OBJECT, LedGroup::interface,
+            LedGroup::property_names::asserted, assertedValue);
     }
     catch (const sdbusplus::exception_t& e)
     {
@@ -362,7 +368,7 @@ void LampTest::clearLamps()
         // we need to off all the LEDs.
         std::vector<std::string> physicalLedPaths =
             phosphor::led::utils::DBusHandler::getSubTreePaths(
-                phosphor::led::phyLedPath, phosphor::led::phyLedIntf);
+                phosphor::led::phyLedPath, LedPhysical::interface);
 
         for (const auto& path : physicalLedPaths)
         {

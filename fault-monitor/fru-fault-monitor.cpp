@@ -4,7 +4,16 @@
 #include <phosphor-logging/elog.hpp>
 #include <phosphor-logging/lg2.hpp>
 #include <sdbusplus/exception.hpp>
+#include <xyz/openbmc_project/Association/Definitions/common.hpp>
 #include <xyz/openbmc_project/Common/error.hpp>
+#include <xyz/openbmc_project/Led/Group/common.hpp>
+#include <xyz/openbmc_project/Logging/Entry/common.hpp>
+#include <xyz/openbmc_project/ObjectMapper/common.hpp>
+
+using ObjectMapper = sdbusplus::common::xyz::openbmc_project::ObjectMapper;
+using AssociationDefinitions =
+    sdbusplus::common::xyz::openbmc_project::association::Definitions;
+using LoggingEntry = sdbusplus::common::xyz::openbmc_project::logging::Entry;
 
 namespace phosphor
 {
@@ -19,12 +28,8 @@ namespace monitor
 
 using namespace phosphor::logging;
 
-static constexpr auto mapperBusName = "xyz.openbmc_project.ObjectMapper";
-static constexpr auto mapperObjPath = "/xyz/openbmc_project/object_mapper";
-static constexpr auto mapperIntf = "xyz.openbmc_project.ObjectMapper";
 static constexpr auto objMgrIntf = "org.freedesktop.DBus.ObjectManager";
 static constexpr auto ledGroups = "/xyz/openbmc_project/led/groups/";
-static constexpr auto logIntf = "xyz.openbmc_project.Logging.Entry";
 
 using AssociationList =
     std::vector<std::tuple<std::string, std::string, std::string>>;
@@ -46,10 +51,13 @@ using ResourceNotFoundErr =
 using InvalidArgumentErr =
     sdbusplus::xyz::openbmc_project::Common::Error::InvalidArgument;
 
+using LedGroup = sdbusplus::common::xyz::openbmc_project::led::Group;
+
 std::string getService(sdbusplus::bus_t& bus, const std::string& path)
 {
-    auto mapper = bus.new_method_call(mapperBusName, mapperObjPath, mapperIntf,
-                                      "GetObject");
+    auto mapper = bus.new_method_call(
+        ObjectMapper::default_service, ObjectMapper::instance_path,
+        ObjectMapper::interface, ObjectMapper::method_names::get_object);
     mapper.append(path.c_str(), std::vector<std::string>({objMgrIntf}));
 
     std::unordered_map<std::string, std::vector<std::string>> mapperResponse;
@@ -106,8 +114,8 @@ void action(sdbusplus::bus_t& bus, const std::string& path, bool assert)
 
     auto method = bus.new_method_call(service.c_str(), ledPath.c_str(),
                                       "org.freedesktop.DBus.Properties", "Set");
-    method.append("xyz.openbmc_project.Led.Group");
-    method.append("Asserted");
+    method.append(LedGroup::interface);
+    method.append(LedGroup::property_names::asserted);
 
     method.append(std::variant<bool>(assert));
 
@@ -128,7 +136,7 @@ void Add::created(sdbusplus::message_t& msg)
 {
     auto bus = msg.get_bus();
 
-    sdbusplus::message::object_path objectPath;
+    sdbusplus::object_path objectPath;
     InterfaceMap interfaces;
     try
     {
@@ -147,7 +155,7 @@ void Add::created(sdbusplus::message_t& msg)
         // Not a new error entry skip
         return;
     }
-    auto iter = interfaces.find("xyz.openbmc_project.Association.Definitions");
+    auto iter = interfaces.find(AssociationDefinitions::interface);
     if (iter == interfaces.end())
     {
         return;
@@ -157,7 +165,8 @@ void Add::created(sdbusplus::message_t& msg)
     // has been created. Do it here.
     lg2::debug("{PATH} created", "PATH", objectPath);
 
-    auto attr = iter->second.find("Associations");
+    auto attr =
+        iter->second.find(AssociationDefinitions::property_names::associations);
     if (attr == iter->second.end())
     {
         return;
@@ -181,11 +190,12 @@ void Add::created(sdbusplus::message_t& msg)
 void getLoggingSubTree(sdbusplus::bus_t& bus, MapperResponseType& subtree)
 {
     auto depth = 0;
-    auto mapperCall = bus.new_method_call(mapperBusName, mapperObjPath,
-                                          mapperIntf, "GetSubTree");
+    auto mapperCall = bus.new_method_call(
+        ObjectMapper::default_service, ObjectMapper::instance_path,
+        ObjectMapper::interface, ObjectMapper::method_names::get_sub_tree);
     mapperCall.append("/");
     mapperCall.append(depth);
-    mapperCall.append(std::vector<Interface>({logIntf}));
+    mapperCall.append(std::vector<Interface>({LoggingEntry::interface}));
 
     try
     {
@@ -216,19 +226,13 @@ void Add::processExistingCallouts(sdbusplus::bus_t& bus)
         auto method = bus.new_method_call(
             elem.second.begin()->first.c_str(), elem.first.c_str(),
             "org.freedesktop.DBus.Properties", "Get");
-        method.append("xyz.openbmc_project.Association.Definitions");
-        method.append("Associations");
-        auto reply = bus.call(method);
-        if (reply.is_method_error())
-        {
-            // do not stop, continue with next elog
-            lg2::error("Error in getting associations");
-            continue;
-        }
+        method.append(AssociationDefinitions::interface);
+        method.append(AssociationDefinitions::property_names::associations);
 
         std::variant<AssociationList> assoc;
         try
         {
+            auto reply = bus.call(method);
             reply.read(assoc);
         }
         catch (const sdbusplus::exception_t& e)

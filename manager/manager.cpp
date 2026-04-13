@@ -11,6 +11,8 @@
 #include <iostream>
 #include <string>
 
+using LedPhysical = sdbusplus::common::xyz::openbmc_project::led::Physical;
+
 namespace phosphor
 {
 namespace led
@@ -169,15 +171,17 @@ void Manager::setLampTestCallBack(
 /** @brief Run through the map and apply action on the LEDs */
 void Manager::driveLEDs(ActionSet& ledsAssert, ActionSet& ledsDeAssert)
 {
-#ifdef USE_LAMP_TEST
-    // Use the lampTestCallBack method and trigger the callback method in the
-    // lamp test(processLEDUpdates), in this way, all lamp test operations
-    // are performed in the lamp test class.
-    if (lampTestCallBack(ledsAssert, ledsDeAssert))
+    if constexpr (USE_LAMP_TEST)
     {
-        return;
+        // Use the lampTestCallBack method and trigger the callback method in
+        // the lamp test(processLEDUpdates), in this way, all lamp test
+        // operations are performed in the lamp test class.
+        if (lampTestCallBack(ledsAssert, ledsDeAssert))
+        {
+            return;
+        }
     }
-#endif
+
     ActionSet newReqChangedLeds;
     std::vector<std::pair<ActionSet&, ActionSet&>> actionsVec = {
         {reqLedsAssert, ledsAssert}, {reqLedsDeAssert, ledsDeAssert}};
@@ -223,14 +227,17 @@ int Manager::drivePhysicalLED(const std::string& objPath, Layout::Action action,
             PropertyValue periodValue{period};
 
             phosphor::led::utils::DBusHandler::setProperty(
-                objPath, phyLedIntf, "DutyOn", dutyOnValue);
+                objPath, LedPhysical::interface,
+                LedPhysical::property_names::duty_on, dutyOnValue);
             phosphor::led::utils::DBusHandler::setProperty(
-                objPath, phyLedIntf, "Period", periodValue);
+                objPath, LedPhysical::interface,
+                LedPhysical::property_names::period, periodValue);
         }
 
         PropertyValue actionValue{getPhysicalAction(action)};
-        phosphor::led::utils::DBusHandler::setProperty(objPath, phyLedIntf,
-                                                       "State", actionValue);
+        phosphor::led::utils::DBusHandler::setProperty(
+            objPath, LedPhysical::interface, LedPhysical::property_names::state,
+            actionValue);
     }
     catch (const sdbusplus::exception_t& e)
     {

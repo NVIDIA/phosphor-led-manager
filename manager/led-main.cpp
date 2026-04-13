@@ -1,19 +1,13 @@
 #include "config.h"
 
-#include "group.hpp"
-#include "ledlayout.hpp"
-#ifdef LED_USE_JSON
-#include "json-parser.hpp"
-#else
-#include "led-gen.hpp"
-#endif
 #include "config-validator.hpp"
+#include "group.hpp"
+#include "json-parser.hpp"
+#include "lamptest/lamptest.hpp"
+#include "ledlayout.hpp"
 #include "manager.hpp"
 #include "serialize.hpp"
 #include "utils.hpp"
-#ifdef USE_LAMP_TEST
-#include "lamptest/lamptest.hpp"
-#endif
 
 #include <CLI/CLI.hpp>
 #include <sdeventplus/event.hpp>
@@ -26,10 +20,8 @@ int main(int argc, char** argv)
 {
     CLI::App app("phosphor-led-manager");
 
-#ifdef LED_USE_JSON
     std::string configFile{};
     app.add_option("-c,--config", configFile, "Path to JSON config");
-#endif
 
     CLI11_PARSE(app, argc, argv);
 
@@ -39,9 +31,7 @@ int main(int argc, char** argv)
     /** @brief Dbus constructs used by LED Group manager */
     auto& bus = phosphor::led::utils::DBusHandler::getBus();
 
-#ifdef LED_USE_JSON
     auto systemLedMap = getSystemLedMap(configFile);
-#endif
 
     phosphor::led::validateConfigV1(systemLedMap);
 
@@ -56,32 +46,38 @@ int main(int argc, char** argv)
     std::vector<std::unique_ptr<phosphor::led::Group>> groups;
 
     std::shared_ptr<phosphor::led::Serialize> serializePtr = nullptr;
-#ifdef PERSISTENT_LED_ASSERTED
-    /** @brief store and re-store Group */
-    serializePtr =
-        std::make_shared<phosphor::led::Serialize>(SAVED_GROUPS_FILE);
-#endif
+    if constexpr (PERSISTENT_LED_ASSERTED)
+    {
+        /** @brief store and re-store Group */
+        serializePtr =
+            std::make_shared<phosphor::led::Serialize>(SAVED_GROUPS_FILE);
+    }
 
-#ifdef USE_LAMP_TEST
-    phosphor::led::LampTest lampTest(event, manager);
+    std::unique_ptr<phosphor::led::LampTest> lampTest;
 
-    // Clear leds triggered by lamp test in previous boot
-    lampTest.clearLamps();
+    if constexpr (USE_LAMP_TEST)
+    {
+        lampTest = std::make_unique<phosphor::led::LampTest>(event, manager);
 
-    groups.emplace_back(std::make_unique<phosphor::led::Group>(
-        bus, LAMP_TEST_OBJECT, manager, serializePtr,
-        [&lampTest](auto&& arg1, auto&& arg2) {
-            return lampTest.requestHandler(std::forward<decltype(arg1)>(arg1),
-                                           std::forward<decltype(arg2)>(arg2));
-        }));
+        // Clear leds triggered by lamp test in previous boot
+        lampTest->clearLamps();
 
-    // Register a lamp test method in the manager class, and call this method
-    // when the lamp test is started
-    manager.setLampTestCallBack([&lampTest](auto&& arg1, auto&& arg2) {
-        return lampTest.processLEDUpdates(std::forward<decltype(arg1)>(arg1),
-                                          std::forward<decltype(arg2)>(arg2));
-    });
-#endif
+        groups.emplace_back(std::make_unique<phosphor::led::Group>(
+            bus, LAMP_TEST_OBJECT, manager, serializePtr,
+            [&lampTest](auto&& arg1, auto&& arg2) {
+                return lampTest->requestHandler(
+                    std::forward<decltype(arg1)>(arg1),
+                    std::forward<decltype(arg2)>(arg2));
+            }));
+
+        // Register a lamp test method in the manager class, and call this
+        // method when the lamp test is started
+        manager.setLampTestCallBack([&lampTest](auto&& arg1, auto&& arg2) {
+            return lampTest->processLEDUpdates(
+                std::forward<decltype(arg1)>(arg1),
+                std::forward<decltype(arg2)>(arg2));
+        });
+    }
 
     /** Now create so many dbus objects as there are groups */
     std::ranges::transform(systemLedMap, std::back_inserter(groups),
