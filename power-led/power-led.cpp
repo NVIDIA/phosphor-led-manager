@@ -8,6 +8,7 @@
 #include <sdbusplus/asio/object_server.hpp>
 #include <sdbusplus/bus.hpp>
 #include <sdbusplus/bus/match.hpp>
+#include <sdbusplus/exception.hpp>
 #include <xyz/openbmc_project/State/Boot/PostCode/server.hpp>
 #include <xyz/openbmc_project/State/Chassis/server.hpp>
 #include <xyz/openbmc_project/State/Host/server.hpp>
@@ -269,9 +270,19 @@ bool poweredOn(sdbusplus::bus::bus& bus)
     std::variant<std::string> state;
     result.read(state);
 
-    return !(StateServer::Host::HostState::Off ==
-             StateServer::Host::convertHostStateFromString(
-                 std::get<std::string>(state)));
+    const std::string& hostStateStr = std::get<std::string>(state);
+    try
+    {
+        return !(StateServer::Host::HostState::Off ==
+                 StateServer::Host::convertHostStateFromString(hostStateStr));
+    }
+    catch (const sdbusplus::exception::InvalidEnumString& e)
+    {
+        lg2::warning(
+            "CurrentHostState invalid or empty on initial read; assuming host not powered on until a valid state is published. WHAT={WHAT}",
+            "WHAT", e.what());
+        return false;
+    }
 }
 
 /*
