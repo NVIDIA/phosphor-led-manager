@@ -11,3 +11,10 @@ foreach svc : [
 ]
     install_data(svc, install_dir: systemd_system_unit_dir)
 endforeach
+
+if get_option('monitor-leak-detector').allowed()
+    install_data(
+        'leak-detector-led-controller.service',
+        install_dir: systemd_system_unit_dir,
+    )
+endif

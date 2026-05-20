@@ -8,6 +8,7 @@
 #include <sdbusplus/asio/object_server.hpp>
 #include <sdbusplus/bus.hpp>
 #include <sdbusplus/bus/match.hpp>
+#include <sdbusplus/exception.hpp>
 #include <xyz/openbmc_project/State/Boot/PostCode/server.hpp>
 #include <xyz/openbmc_project/State/Chassis/server.hpp>
 #include <xyz/openbmc_project/State/Host/server.hpp>
@@ -142,7 +143,12 @@ static int checkSameCode(std::vector<uint8_t> a, std::vector<uint8_t> b)
 
     // Advance the longer iterator so both end at the same place
     // In other words, skip the bytes that the shorter doesn't have
-    advance(longer_it, longer_code.size() - shorter_code.size() - 1);
+    // This calculation ignores the last byte of the longer code, which is the
+    // instance byte
+    if (longer_code.size() != shorter_code.size())
+    {
+        advance(longer_it, longer_code.size() - shorter_code.size() - 1);
+    }
     // Compare the elements until one doesn't match
     for (; longer_it != longer_code.end() && shorter_it != shorter_code.end();
          longer_it++, shorter_it++)
@@ -264,9 +270,19 @@ bool poweredOn(sdbusplus::bus::bus& bus)
     std::variant<std::string> state;
     result.read(state);
 
-    return !(StateServer::Host::HostState::Off ==
-             StateServer::Host::convertHostStateFromString(
-                 std::get<std::string>(state)));
+    const std::string& hostStateStr = std::get<std::string>(state);
+    try
+    {
+        return !(StateServer::Host::HostState::Off ==
+                 StateServer::Host::convertHostStateFromString(hostStateStr));
+    }
+    catch (const sdbusplus::exception::InvalidEnumString& e)
+    {
+        lg2::warning(
+            "CurrentHostState invalid or empty on initial read; assuming host not powered on until a valid state is published. WHAT={WHAT}",
+            "WHAT", e.what());
+        return false;
+    }
 }
 
 /*
@@ -347,7 +363,16 @@ int main(int argc, char** argv)
     }
     lg2::info("Successfully parsed power LED controller config.");
     // Initialize power status
-    host_power_on = poweredOn(bus);
+    try
+    {
+        host_power_on = poweredOn(bus);
+    }
+    catch (const sdbusplus::exception::SdBusError& e)
+    {
+        lg2::error("Failed to query the host power status.");
+        lg2::error(e.what());
+        return -1;
+    }
     // Create snooping objects for postcodes and power status
     PowerLEDMatch powerLEDmatch(bus, updatePostcodeStatus, updatePowerStatus,
                                 eventP);

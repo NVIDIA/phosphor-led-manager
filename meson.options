@@ -15,6 +15,13 @@ option(
 )
 
 option(
+    'monitor-leak-detector',
+    type: 'feature',
+    value: 'disabled',
+    description: 'Enable LeakDetector monitor (drives the leak_critical LED group)',
+)
+
+option(
     'persistent-led-asserted',
     type: 'feature',
     value: 'enabled',

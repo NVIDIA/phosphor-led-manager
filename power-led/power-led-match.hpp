@@ -1,4 +1,6 @@
+#include <phosphor-logging/lg2.hpp>
 #include <sdbusplus/bus.hpp>
+#include <sdbusplus/exception.hpp>
 #include <sdbusplus/message.hpp>
 #include <sdbusplus/server.hpp>
 #include <xyz/openbmc_project/State/Host/server.hpp>
@@ -100,9 +102,22 @@ class PowerLEDMatch
                 {
                     if (valPropMap != msgData.end())
                     {
-                        StateServer::Host::HostState currentHostState =
-                            StateServer::Host::convertHostStateFromString(
-                                std::get<std::string>(valPropMap->second));
+                        const std::string& hostStateStr =
+                            std::get<std::string>(valPropMap->second);
+                        StateServer::Host::HostState currentHostState;
+                        try
+                        {
+                            currentHostState =
+                                StateServer::Host::convertHostStateFromString(
+                                    hostStateStr);
+                        }
+                        catch (const sdbusplus::exception::InvalidEnumString& e)
+                        {
+                            lg2::warning(
+                                "Ignoring CurrentHostState change: invalid or empty value. WHAT={WHAT}",
+                                "WHAT", e.what());
+                            return;
+                        }
                         if (currentHostState ==
                             StateServer::Host::HostState::Off)
                         {

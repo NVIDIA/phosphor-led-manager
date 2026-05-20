@@ -80,6 +80,7 @@ deps = [
 
 subdir('manager')
 subdir('fault-monitor')
+subdir('leak-detector')
 subdir('power-led')
 subdir('service_files')
 
