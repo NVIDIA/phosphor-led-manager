@@ -24,13 +24,12 @@ conf_data.set_quoted('ELOG_ENTRY', 'entry')
 conf_data.set_quoted('LED_FAULT', 'fault')
 
 conf_data.set('CLASS_VERSION', 1)
-conf_data.set('LED_USE_JSON', get_option('use-json').allowed())
-conf_data.set('USE_LAMP_TEST', get_option('use-lamp-test').allowed())
-conf_data.set(
+conf_data.set10('USE_LAMP_TEST', get_option('use-lamp-test').allowed())
+conf_data.set10(
     'MONITOR_OPERATIONAL_STATUS',
     get_option('monitor-operational-status').allowed(),
 )
-conf_data.set(
+conf_data.set10(
     'PERSISTENT_LED_ASSERTED',
     get_option('persistent-led-asserted').allowed(),
 )
@@ -40,10 +39,6 @@ phosphor_dbus_interfaces_dep = dependency('phosphor-dbus-interfaces')
 phosphor_logging_dep = dependency('phosphor-logging')
 sdbusplus_dep = dependency('sdbusplus')
 sdeventplus_dep = dependency('sdeventplus')
-
-prog_python = find_program('python3', required: true)
-realpath_prog = find_program('realpath')
-
 
 if cpp.has_header('CLI/CLI.hpp')
     CLI11_dep = declare_dependency()
