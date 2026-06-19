@@ -37,10 +37,10 @@ class JsonConfig
      */
     JsonConfig(sdbusplus::bus_t& bus, sdeventplus::Event& event) : event(event)
     {
-        match = std::make_unique<sdbusplus::bus::match_t>(
+        match = std::make_unique<sdbusplus::match>(
             bus,
-            sdbusplus::bus::match::rules::interfacesAdded() +
-                sdbusplus::bus::match::rules::sender(
+            sdbusplus::match_rules::interfacesAdded() +
+                sdbusplus::match_rules::sender(
                     "xyz.openbmc_project.EntityManager"),
             [this](sdbusplus::message_t& m) { ifacesAddedCallback(m); });
         getFilePath();
@@ -223,7 +223,7 @@ class JsonConfig
      *        for the xyz.openbmc_project.Inventory.Decorator.Compatible
      * interface to show up.
      */
-    std::unique_ptr<sdbusplus::bus::match_t> match;
+    std::unique_ptr<sdbusplus::match> match;
 };
 
 /** Blocking call to find the JSON Config from DBus. */
