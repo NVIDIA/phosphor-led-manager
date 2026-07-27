@@ -179,7 +179,7 @@ void Monitor::onPropertiesChanged(sdbusplus::message_t& msg)
 
 void Monitor::onInterfacesAdded(sdbusplus::message_t& msg)
 {
-    sdbusplus::message::object_path objectPath;
+    sdbusplus::object_path objectPath;
     try
     {
         msg.read(objectPath);
@@ -210,7 +210,7 @@ void Monitor::onInterfacesAdded(sdbusplus::message_t& msg)
 
 void Monitor::onInterfacesRemoved(sdbusplus::message_t& msg)
 {
-    sdbusplus::message::object_path objectPath;
+    sdbusplus::object_path objectPath;
     std::vector<std::string> interfaces;
     try
     {
