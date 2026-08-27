@@ -29,6 +29,13 @@ option(
 )
 
 option(
+    'gpio-led',
+    type: 'feature',
+    value: 'disabled',
+    description: 'Enable the NVIDIA GPIO LED controller (arbitrated LEDs)',
+)
+
+option(
     'persistent-led-asserted',
     type: 'feature',
     value: 'enabled',

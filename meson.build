@@ -87,6 +87,9 @@ subdir('manager')
 subdir('fault-monitor')
 subdir('leak-detector')
 subdir('power-led')
+if get_option('gpio-led').allowed()
+    subdir('gpio-led')
+endif
 subdir('service_files')
 
 configure_file(output: 'config.h', configuration: conf_data)
