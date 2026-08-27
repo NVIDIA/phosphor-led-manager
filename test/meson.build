@@ -73,3 +73,19 @@ foreach t : tests
         workdir: meson.current_source_dir(),
     )
 endforeach
+
+# nvidia-gpio-led has its own dependency set (libgpiod) and reuses the daemon's
+# non-main sources, so it is built as a separate test executable.
+if get_option('gpio-led').allowed()
+    test(
+        'utest-gpio-led',
+        executable(
+            'utest_gpio_led',
+            'utest-gpio-led.cpp',
+            gpio_led_lib_sources,
+            include_directories: [gpio_led_inc],
+            dependencies: [gtest_dep, gmock_dep, gpio_led_deps],
+        ),
+        workdir: meson.current_source_dir(),
+    )
+endif
