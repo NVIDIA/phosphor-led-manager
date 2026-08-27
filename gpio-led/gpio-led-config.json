@@ -1,0 +1,18 @@
+{
+    "leds": [
+        {
+            "name": "uid_led",
+            "output_gpio": "UID_STATUS_OUTPUT",
+            "output_active_low": true,
+            "input_gpio": "UID_STATUS_INPUT",
+            "input_active_low": true
+        },
+        {
+            "name": "fault_led",
+            "output_gpio": "FAULT_STATUS_OUTPUT",
+            "output_active_low": true,
+            "input_gpio": "FAULT_STATUS_INPUT",
+            "input_active_low": true
+        }
+    ]
+}
