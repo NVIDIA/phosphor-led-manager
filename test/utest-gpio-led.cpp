@@ -1,10 +1,20 @@
 #include "config.hpp"
+#include "gpio-access.hpp"
+#include "gpio-physical.hpp"
 
+#include <sdbusplus/bus.hpp>
+
+#include <memory>
 #include <string>
 
+#include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
 using namespace phosphor::led::gpio;
+using Action = GpioPhysical::Action;
+using ::testing::_;
+using ::testing::NiceMock;
+using ::testing::Return;
 
 // ---------------------------------------------------------------------------
 // Config parsing
@@ -135,4 +145,138 @@ TEST(GpioLedConfigParse, OutputEqualsInputThrows)
     const std::string raw =
         R"({"leds":[{"name":"x","output_gpio":"S","input_gpio":"S","output_active_low":true,"input_active_low":true}]})";
     EXPECT_THROW(parseAndValidate(raw), ConfigError);
+}
+
+// ---------------------------------------------------------------------------
+// GpioPhysical GPIO drive / state readback (mock GpioAccess)
+// ---------------------------------------------------------------------------
+
+namespace
+{
+
+class MockGpioAccess : public GpioAccess
+{
+  public:
+    MOCK_METHOD(void, drive, (bool asserted), (override));
+    MOCK_METHOD(bool, inputAsserted, (), (override));
+    MOCK_METHOD(int, inputEventFd, (), (override));
+    MOCK_METHOD(void, readInputEvent, (), (override));
+};
+
+constexpr const char* ledObj = "/xyz/openbmc_project/led/physical/uid_led";
+
+} // namespace
+
+TEST(GpioPhysicalState, InitialStateOffWhenInputDeasserted)
+{
+    auto bus = sdbusplus::bus::new_default();
+    auto access = std::make_unique<NiceMock<MockGpioAccess>>();
+    ON_CALL(*access, inputAsserted()).WillByDefault(Return(false));
+
+    GpioPhysical led(bus, ledObj, std::move(access));
+    EXPECT_EQ(led.state(), Action::Off);
+}
+
+TEST(GpioPhysicalState, InitialStateBlinkWhenInputAsserted)
+{
+    auto bus = sdbusplus::bus::new_default();
+    auto access = std::make_unique<NiceMock<MockGpioAccess>>();
+    ON_CALL(*access, inputAsserted()).WillByDefault(Return(true));
+
+    GpioPhysical led(bus, ledObj, std::move(access));
+    EXPECT_EQ(led.state(), Action::Blink);
+}
+
+TEST(GpioPhysicalState, OnDoesNotAssertOutput)
+{
+    // An arbitrated LED has no steady-on mode: On deasserts, same as Off.
+    auto bus = sdbusplus::bus::new_default();
+    auto access = std::make_unique<NiceMock<MockGpioAccess>>();
+    auto* accessPtr = access.get();
+    ON_CALL(*accessPtr, inputAsserted()).WillByDefault(Return(false));
+
+    GpioPhysical led(bus, ledObj, std::move(access));
+
+    EXPECT_CALL(*accessPtr, drive(false));
+    led.state(Action::On);
+    EXPECT_EQ(led.state(), Action::Off);
+}
+
+TEST(GpioPhysicalState, BlinkAssertsOutput)
+{
+    auto bus = sdbusplus::bus::new_default();
+    auto access = std::make_unique<NiceMock<MockGpioAccess>>();
+    auto* accessPtr = access.get();
+    ON_CALL(*accessPtr, inputAsserted()).WillByDefault(Return(false));
+
+    GpioPhysical led(bus, ledObj, std::move(access));
+
+    // Blink is the only action that asserts the request line.
+    EXPECT_CALL(*accessPtr, drive(true));
+    ON_CALL(*accessPtr, inputAsserted()).WillByDefault(Return(true));
+    led.state(Action::Blink);
+}
+
+TEST(GpioPhysicalState, OffDeassertsOutput)
+{
+    auto bus = sdbusplus::bus::new_default();
+    auto access = std::make_unique<NiceMock<MockGpioAccess>>();
+    auto* accessPtr = access.get();
+    ON_CALL(*accessPtr, inputAsserted()).WillByDefault(Return(true));
+
+    GpioPhysical led(bus, ledObj, std::move(access));
+
+    EXPECT_CALL(*accessPtr, drive(false));
+    ON_CALL(*accessPtr, inputAsserted()).WillByDefault(Return(false));
+    led.state(Action::Off);
+    EXPECT_EQ(led.state(), Action::Off);
+}
+
+TEST(GpioPhysicalState, ReportedStateTracksInputNotRequest)
+{
+    // Multi-BMC: we deassert, but another BMC still holds the shared line, so
+    // the input stays asserted and reported state must remain Blink.
+    auto bus = sdbusplus::bus::new_default();
+    auto access = std::make_unique<NiceMock<MockGpioAccess>>();
+    auto* accessPtr = access.get();
+    ON_CALL(*accessPtr, inputAsserted()).WillByDefault(Return(true));
+
+    GpioPhysical led(bus, ledObj, std::move(access));
+
+    EXPECT_CALL(*accessPtr, drive(false));
+    led.state(Action::Off);
+    EXPECT_EQ(led.state(), Action::Blink);
+}
+
+TEST(GpioPhysicalState, UpdateStateFromInputReflectsLine)
+{
+    auto bus = sdbusplus::bus::new_default();
+    auto access = std::make_unique<NiceMock<MockGpioAccess>>();
+    auto* accessPtr = access.get();
+    ON_CALL(*accessPtr, inputAsserted()).WillByDefault(Return(false));
+
+    GpioPhysical led(bus, ledObj, std::move(access));
+    EXPECT_EQ(led.state(), Action::Off);
+
+    // Another node asserts the shared line; an edge event drives this update.
+    ON_CALL(*accessPtr, inputAsserted()).WillByDefault(Return(true));
+    EXPECT_EQ(led.updateStateFromInput(), Action::Blink);
+    EXPECT_EQ(led.state(), Action::Blink);
+}
+
+TEST(GpioPhysicalState, DutyOnAndPeriodStoredNotForwarded)
+{
+    auto bus = sdbusplus::bus::new_default();
+    auto access = std::make_unique<NiceMock<MockGpioAccess>>();
+    auto* accessPtr = access.get();
+    ON_CALL(*accessPtr, inputAsserted()).WillByDefault(Return(false));
+
+    GpioPhysical led(bus, ledObj, std::move(access));
+
+    // Writing blink parameters must not touch the output GPIO.
+    EXPECT_CALL(*accessPtr, drive(_)).Times(0);
+    led.dutyOn(30);
+    led.period(2000);
+    EXPECT_EQ(led.dutyOn(), 30);
+    EXPECT_EQ(led.period(), 2000);
 }
