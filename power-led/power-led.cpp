@@ -260,7 +260,7 @@ static void updatePowerLed()
 Taken from Phosphor Button Handler.
 Returns true if chassis is on, false if off.
 */
-bool poweredOn(sdbusplus::bus::bus& bus)
+bool poweredOn(sdbusplus::bus_t& bus)
 {
     auto method = bus.new_method_call(HOST_SERVICE_NAME, HOST_OBJECT_NAME,
                                       PROPERTY_INTERFACE_NAME, "Get");
@@ -288,7 +288,7 @@ bool poweredOn(sdbusplus::bus::bus& bus)
 /*
  * Gets a vector of all POST codes that are current to this boot cycle.
  */
-std::vector<postcode_t> getPostCodesFromDBUS(sdbusplus::bus::bus& bus)
+std::vector<postcode_t> getPostCodesFromDBUS(sdbusplus::bus_t& bus)
 {
     std::vector<postcode_t> codeArray;
     auto method = bus.new_method_call(
