@@ -18,8 +18,7 @@ GpioPhysical::GpioPhysical(sdbusplus::bus_t& bus, const std::string& objPath,
 
 void GpioPhysical::setInitialState()
 {
-    Action initial =
-        gpioAccess->inputAsserted() ? Action::Blink : Action::Off;
+    Action initial = gpioAccess->inputAsserted() ? Action::Blink : Action::Off;
     PhysicalObject::state(initial);
 }
 
@@ -37,8 +36,7 @@ auto GpioPhysical::updateStateFromInput() -> Action
 {
     // An asserted shared line means the MCU is blinking the LED; Blink is the
     // only action that asserts it, so report Blink rather than On.
-    Action actual =
-        gpioAccess->inputAsserted() ? Action::Blink : Action::Off;
+    Action actual = gpioAccess->inputAsserted() ? Action::Blink : Action::Off;
     return PhysicalObject::state(actual);
 }
 
