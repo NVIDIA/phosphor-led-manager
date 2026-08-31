@@ -56,7 +56,7 @@ class PowerLEDMatch
         PostCodeDataHolder::getInstance();
 
   public:
-    PowerLEDMatch(sdbusplus::bus::bus& bus, postcode_handler_t postcode_handler,
+    PowerLEDMatch(sdbusplus::bus_t& bus, postcode_handler_t postcode_handler,
                   host_state_handler_t host_state_handler,
                   EventPtr& /*event*/) :
         bus(bus),
@@ -140,7 +140,7 @@ class PowerLEDMatch
     PowerLEDMatch& operator=(PowerLEDMatch&&) = delete;
 
   protected:
-    sdbusplus::bus::bus& bus;
+    sdbusplus::bus_t& bus;
     sdbusplus::bus::match_t propertiesChangedSignalRaw;
     sdbusplus::bus::match_t propertiesChangedSignalCurrentHostState;
 };
