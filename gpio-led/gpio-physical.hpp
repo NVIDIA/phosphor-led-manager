@@ -15,12 +15,12 @@ namespace phosphor::led::gpio
 using PhysicalObject = sdbusplus::server::object_t<
     sdbusplus::xyz::openbmc_project::Led::server::Physical>;
 
-// xyz.openbmc_project.Led.Physical for one arbitrated LED. Writing Blink asserts
-// the output request line; On and Off both deassert it. Reported State tracks
-// the input line, so it stays correct when another BMC also drives the shared
-// line. Every other property on the interface (DutyOn, Period, Color) is stored
-// by the base class and has no hardware effect: the MCU owns blink rate and the
-// LED color is fixed.
+// xyz.openbmc_project.Led.Physical for one arbitrated LED. Writing Blink
+// asserts the output request line; On and Off both deassert it. Reported State
+// tracks the input line, so it stays correct when another BMC also drives the
+// shared line. Every other property on the interface (DutyOn, Period, Color) is
+// stored by the base class and has no hardware effect: the MCU owns blink rate
+// and the LED color is fixed.
 class GpioPhysical : public PhysicalObject
 {
   public:
