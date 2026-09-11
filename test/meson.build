@@ -52,7 +52,7 @@ endforeach
 
 # nvidia-gpio-led has its own dependency set (libgpiod) and reuses the daemon's
 # non-main sources, so it is built as a separate test executable.
-if get_option('gpio-led').allowed()
+if get_option('gpio-led').enabled()
     test(
         'utest-gpio-led',
         executable(

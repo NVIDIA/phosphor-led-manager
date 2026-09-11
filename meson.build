@@ -82,7 +82,7 @@ subdir('manager')
 subdir('fault-monitor')
 subdir('leak-detector')
 subdir('power-led')
-if get_option('gpio-led').allowed()
+if get_option('gpio-led').enabled()
     subdir('gpio-led')
 endif
 subdir('service_files')

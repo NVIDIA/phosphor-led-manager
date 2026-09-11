@@ -12,7 +12,7 @@ foreach svc : [
     install_data(svc, install_dir: systemd_system_unit_dir)
 endforeach
 
-if get_option('gpio-led').allowed()
+if get_option('gpio-led').enabled()
     install_data(
         'xyz.openbmc_project.LED.NvidiaGpioLed.service',
         install_dir: systemd_system_unit_dir,
