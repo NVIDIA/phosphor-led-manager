@@ -57,7 +57,7 @@ class Remove
     std::string inventoryPath;
 
     /** @brief sdbusplus signal matches for fault removed */
-    sdbusplus::bus::match_t matchRemoved;
+    sdbusplus::match matchRemoved;
 
     /** @brief Callback function for fru fault created
      *  @param[in] msg       - Data associated with subscribed signal
@@ -69,7 +69,7 @@ class Remove
      */
     static std::string match(const std::string& path)
     {
-        namespace MatchRules = sdbusplus::bus::match::rules;
+        namespace MatchRules = sdbusplus::match_rules;
 
         std::string matchStmt =
             MatchRules::interfacesRemoved() +
@@ -99,8 +99,8 @@ class Add
      */
     explicit Add(sdbusplus::bus_t& bus) :
         matchCreated(bus,
-                     sdbusplus::bus::match::rules::interfacesAdded() +
-                         sdbusplus::bus::match::rules::path_namespace(
+                     sdbusplus::match_rules::interfacesAdded() +
+                         sdbusplus::match_rules::path_namespace(
                              "/xyz/openbmc_project/logging"),
                      [this](sdbusplus::message_t& m) { created(m); })
     {
@@ -109,7 +109,7 @@ class Add
 
   private:
     /** @brief sdbusplus signal match for fault created */
-    sdbusplus::bus::match_t matchCreated;
+    sdbusplus::match matchCreated;
 
     std::vector<std::unique_ptr<Remove>> removeWatches;
 

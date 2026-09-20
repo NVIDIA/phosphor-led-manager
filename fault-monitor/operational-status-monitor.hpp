@@ -52,7 +52,7 @@ class Monitor
 
   private:
     /** @brief sdbusplus signal matches for Monitor */
-    sdbusplus::bus::match_t matchSignal;
+    sdbusplus::match matchSignal;
 
     /**
      * @brief Callback handler that gets invoked when the PropertiesChanged
