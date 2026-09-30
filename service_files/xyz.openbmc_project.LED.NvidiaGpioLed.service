@@ -1,0 +1,17 @@
+[Unit]
+Description=NVIDIA GPIO LED controller (arbitrated UID/Fault LEDs)
+StartLimitIntervalSec=60
+StartLimitBurst=5
+
+[Service]
+Restart=on-failure
+# Five tries, five seconds apart, so a late-appearing gpiochip has time to
+# show up. Set explicitly because the systemd defaults vary by distro.
+RestartSec=5
+ExecStart=/usr/libexec/phosphor-led-manager/nvidia-gpio-led --config /usr/share/phosphor-led-manager/gpio-led/gpio-led-config.json
+SyslogIdentifier=nvidia-gpio-led
+Type=dbus
+BusName=xyz.openbmc_project.LED.NvidiaGpioLed
+
+[Install]
+WantedBy=multi-user.target
