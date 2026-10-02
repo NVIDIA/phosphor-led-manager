@@ -26,10 +26,3 @@ executable(
     install: true,
     install_dir: get_option('libexecdir') / 'phosphor-led-manager',
 )
-
-# Install the example config into a dedicated subdirectory so it is not caught
-# by the base recipe's top-level ${datadir}/${PN}/*.json prune.
-install_data(
-    'gpio-led-config.json',
-    install_dir: get_option('datadir') / 'phosphor-led-manager' / 'gpio-led',
-)
