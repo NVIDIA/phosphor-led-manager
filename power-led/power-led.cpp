@@ -373,13 +373,16 @@ int main(int argc, char** argv)
         lg2::error(e.what());
         return -1;
     }
-    // Create snooping objects for postcodes and power status
-    PowerLEDMatch powerLEDmatch(bus, updatePostcodeStatus, updatePowerStatus,
-                                eventP);
-    updatePostcodeStatus(getPostCodesFromDBUS(bus));
-
+    const char* operation = "registering POST and power-state matches";
     try
     {
+        // Keep the matches alive until the event loop exits.
+        PowerLEDMatch powerLEDmatch(bus, updatePostcodeStatus,
+                                    updatePowerStatus, eventP);
+        operation = "reading initial POST history (GetPostCodes)";
+        updatePostcodeStatus(getPostCodesFromDBUS(bus));
+
+        operation = "running the event loop";
         bus.attach_event(eventP.get(), SD_EVENT_PRIORITY_NORMAL);
         ret = sd_event_loop(eventP.get());
         if (ret < 0)
@@ -391,7 +394,8 @@ int main(int argc, char** argv)
     }
     catch (const std::exception& e)
     {
-        lg2::error(e.what());
+        lg2::error("Power LED controller failed while {OPERATION}: {ERROR}",
+                   "OPERATION", operation, "ERROR", e.what());
         return -1;
     }
 
