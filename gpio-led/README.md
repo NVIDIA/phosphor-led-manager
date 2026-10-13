@@ -41,7 +41,8 @@ Disabled by default. Enable with `-Dgpio-led=enabled`.
 
 The systemd unit `xyz.openbmc_project.LED.NvidiaGpioLed.service` is `Type=dbus`
 with `BusName=xyz.openbmc_project.LED.NvidiaGpioLed`. It restarts on failure
-every 5 seconds, giving up after the systemd default of 5 attempts.
+every 5 seconds, giving up after 5 attempts in 60 seconds
+(`StartLimitBurst=5`, `StartLimitIntervalSec=60`).
 
 ## Config
 
@@ -74,8 +75,9 @@ GPIO line names are resolved by libgpiod at startup and must match the DTS.
 `output_gpio` and `input_gpio` must differ, and every LED name and GPIO line
 name must be unique across the config.
 
-The line names in `gpio-led-config.json` are placeholders; confirm the real ones
-against the platform DTS before use.
+`gpio-led-config.json` in this directory is a template and is not installed.
+The platform layer installs its own config at the path in `ExecStart`, with line
+names confirmed against the platform DTS.
 
 ## D-Bus interface
 
@@ -84,5 +86,5 @@ against the platform DTS before use.
 - Interface: `xyz.openbmc_project.Led.Physical`
 
 The LED groups that assert these objects are defined by the platform's
-`led-group-config.json`, which lives in the BSP layer; this repo ships only
-the example `gpio-led-config.json`.
+`led-group-config.json`, which lives in the BSP layer, as does the
+`gpio-led-config.json` this daemon reads.
