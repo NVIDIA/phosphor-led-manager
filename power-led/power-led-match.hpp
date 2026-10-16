@@ -5,6 +5,14 @@
 #include <sdbusplus/server.hpp>
 #include <xyz/openbmc_project/State/Host/server.hpp>
 
+#include <functional>
+#include <map>
+#include <memory>
+#include <string>
+#include <tuple>
+#include <variant>
+#include <vector>
+
 using primarycode_t = std::vector<uint8_t>;
 using secondarycode_t = std::vector<uint8_t>;
 using postcode_t = std::tuple<primarycode_t, secondarycode_t>;
@@ -32,6 +40,10 @@ class PostCodeDataHolder
         "/var/lib/phosphor-post-code-manager/host";
     const static constexpr char* HostStatePathPrefix =
         "/xyz/openbmc_project/state/host";
+    const static constexpr char* OsStatusIntf =
+        "xyz.openbmc_project.State.OperatingSystem.Status";
+    const static constexpr char* OsStatusStandby =
+        "xyz.openbmc_project.State.OperatingSystem.Status.OSStatus.Standby";
 };
 
 struct EventDeleter
@@ -51,6 +63,7 @@ class PowerLEDMatch
 {
     using postcode_handler_t = std::function<void(std::vector<postcode_t>)>;
     using host_state_handler_t = std::function<void(bool)>;
+    using os_state_handler_t = std::function<void(bool)>;
 
     PostCodeDataHolder postcodeDataHolderObj =
         PostCodeDataHolder::getInstance();
@@ -58,7 +71,8 @@ class PowerLEDMatch
   public:
     PowerLEDMatch(sdbusplus::bus::bus& bus, postcode_handler_t postcode_handler,
                   host_state_handler_t host_state_handler,
-                  EventPtr& /*event*/) :
+                  EventPtr& /*event*/,
+                  os_state_handler_t os_state_handler = nullptr) :
         bus(bus),
         propertiesChangedSignalRaw(
             bus,
@@ -130,7 +144,38 @@ class PowerLEDMatch
                     }
                 }
             })
-    {}
+    {
+        // Optional: report when the OS status reaches Standby (POST complete)
+        if (os_state_handler)
+        {
+            propertiesChangedSignalOsState =
+                std::make_unique<sdbusplus::bus::match_t>(
+                    bus,
+                    sdbusplus::bus::match::rules::type::signal() +
+                        sdbusplus::bus::match::rules::member(
+                            "PropertiesChanged") +
+                        sdbusplus::bus::match::rules::path(
+                            PostCodeDataHolder::HostStatePathPrefix +
+                            std::to_string(postcodeDataHolderObj.node)) +
+                        sdbusplus::bus::match::rules::interface(
+                            PostCodeDataHolder::PropertiesIntf) +
+                        sdbusplus::bus::match::rules::argN(
+                            0, PostCodeDataHolder::OsStatusIntf),
+                    [os_state_handler](sdbusplus::message::message& msg) {
+                        std::string objectName;
+                        std::map<std::string, std::variant<std::string>>
+                            msgData;
+                        msg.read(objectName, msgData);
+                        auto it = msgData.find("OperatingSystemState");
+                        if (it != msgData.end())
+                        {
+                            os_state_handler(
+                                std::get<std::string>(it->second) ==
+                                PostCodeDataHolder::OsStatusStandby);
+                        }
+                    });
+        }
+    }
 
     PowerLEDMatch() = delete; // no default constructor
     ~PowerLEDMatch() = default;
@@ -143,4 +188,5 @@ class PowerLEDMatch
     sdbusplus::bus::bus& bus;
     sdbusplus::bus::match_t propertiesChangedSignalRaw;
     sdbusplus::bus::match_t propertiesChangedSignalCurrentHostState;
+    std::unique_ptr<sdbusplus::bus::match_t> propertiesChangedSignalOsState;
 };

@@ -23,6 +23,10 @@
 constexpr const char* HOST_OBJECT_NAME = "/xyz/openbmc_project/state/host0";
 constexpr const char* HOST_SERVICE_NAME = "xyz.openbmc_project.State.Host";
 constexpr const char* HOST_INTERFACE_NAME = "xyz.openbmc_project.State.Host";
+constexpr const char* OS_STATUS_INTERFACE_NAME =
+    "xyz.openbmc_project.State.OperatingSystem.Status";
+constexpr const char* OS_STATUS_STANDBY =
+    "xyz.openbmc_project.State.OperatingSystem.Status.OSStatus.Standby";
 constexpr const char* PROPERTY_INTERFACE_NAME =
     "org.freedesktop.DBus.Properties";
 
@@ -45,6 +49,9 @@ auto POST_end = std::vector<uint8_t>{};
 std::atomic<bool> started_post = false;
 std::atomic<bool> ended_post = false;
 std::atomic<bool> host_power_on = false;
+// When true, POST progress comes from the OperatingSystemState D-Bus property
+// (Standby == POST complete) instead of POST code matching.
+bool use_os_state = false;
 
 boost::asio::io_context io;
 std::shared_ptr<sdbusplus::asio::connection> conn;
@@ -89,10 +96,18 @@ static bool readConfig(std::string configFile)
     }
     try
     {
-        POST_start = convertStringVectToHexVect(
-            std::vector<std::string>(config_json["POST_start"]));
-        POST_end = convertStringVectToHexVect(
-            std::vector<std::string>(config_json["POST_end"]));
+        use_os_state = config_json.value("POST_use_os_state", false);
+        // POST codes are not needed when the OS state property is used
+        if (!use_os_state || config_json.contains("POST_start"))
+        {
+            POST_start = convertStringVectToHexVect(
+                std::vector<std::string>(config_json["POST_start"]));
+        }
+        if (!use_os_state || config_json.contains("POST_end"))
+        {
+            POST_end = convertStringVectToHexVect(
+                std::vector<std::string>(config_json["POST_end"]));
+        }
     }
     catch (const std::exception& e)
     {
@@ -112,7 +127,8 @@ static bool readConfig(std::string configFile)
             "Error parsing power-led-controller config file: couldn't parse LED group names. Be sure to use the correct keys.");
         return false;
     }
-    if (POST_start.empty() || POST_end.empty() || post_active_group == "" ||
+    if ((!use_os_state && (POST_start.empty() || POST_end.empty())) ||
+        post_active_group == "" ||
         fully_powered_on_group == "" || BMC_booted_group == "")
     {
         lg2::error(
@@ -169,6 +185,11 @@ static int checkSameCode(std::vector<uint8_t> a, std::vector<uint8_t> b)
  */
 static void updatePostcodeStatus(std::vector<postcode_t> postcodes)
 {
+    // POST progress is driven by OperatingSystemState instead
+    if (use_os_state)
+    {
+        return;
+    }
     // Loop through all provided postcodes
     bool change = false;
     for (auto& postcode : postcodes)
@@ -198,6 +219,42 @@ static void updatePostcodeStatus(std::vector<postcode_t> postcodes)
 }
 
 /*
+ * Handler for OperatingSystemState changes (only used with POST_use_os_state).
+ * Standby means POST is complete.
+ */
+static void updateOsStatus(bool postComplete)
+{
+    if (ended_post != postComplete)
+    {
+        ended_post = postComplete;
+        updatePowerLed();
+    }
+}
+
+/*
+ * Reads OperatingSystemState; returns true if it is Standby.
+ */
+static bool osStateIsStandby(sdbusplus::bus_t& bus)
+{
+    try
+    {
+        auto method = bus.new_method_call(HOST_SERVICE_NAME, HOST_OBJECT_NAME,
+                                          PROPERTY_INTERFACE_NAME, "Get");
+        method.append(OS_STATUS_INTERFACE_NAME, "OperatingSystemState");
+        auto result = bus.call(method);
+        std::variant<std::string> state;
+        result.read(state);
+        return std::get<std::string>(state) == OS_STATUS_STANDBY;
+    }
+    catch (const std::exception& e)
+    {
+        lg2::warning("Could not read OperatingSystemState: {WHAT}", "WHAT",
+                     e.what());
+        return false;
+    }
+}
+
+/*
  * Handler for when a power status change is detected.
  * If the power state changes, then the LED should be updated
  * accordingly.
@@ -212,6 +269,12 @@ static void updatePowerStatus(bool isPowerOn)
             lg2::info("Power LED: Host powering off. Resetting LED.");
             started_post = false;
             ended_post = false;
+        }
+
+        // With OS state mode, POST is considered started once the host is on
+        if (use_os_state && isPowerOn)
+        {
+            started_post = true;
         }
 
         // Update booleans and LEDs if necessary
@@ -377,10 +440,21 @@ int main(int argc, char** argv)
     try
     {
         // Keep the matches alive until the event loop exits.
-        PowerLEDMatch powerLEDmatch(bus, updatePostcodeStatus,
-                                    updatePowerStatus, eventP);
-        operation = "reading initial POST history (GetPostCodes)";
-        updatePostcodeStatus(getPostCodesFromDBUS(bus));
+        PowerLEDMatch powerLEDmatch(
+            bus, updatePostcodeStatus, updatePowerStatus, eventP,
+            use_os_state ? updateOsStatus : nullptr);
+        if (use_os_state)
+        {
+            operation = "reading initial OperatingSystemState";
+            started_post = host_power_on.load();
+            ended_post = host_power_on && osStateIsStandby(bus);
+            updatePowerLed();
+        }
+        else
+        {
+            operation = "reading initial POST history (GetPostCodes)";
+            updatePostcodeStatus(getPostCodesFromDBUS(bus));
+        }
 
         operation = "running the event loop";
         bus.attach_event(eventP.get(), SD_EVENT_PRIORITY_NORMAL);
