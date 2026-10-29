@@ -46,6 +46,11 @@ class PostCodeDataHolder
         "xyz.openbmc_project.State.OperatingSystem.Status.OSStatus.Standby";
 };
 
+inline bool osStateIsStandby(const std::string& state)
+{
+    return state == PostCodeDataHolder::OsStatusStandby;
+}
+
 struct EventDeleter
 {
     void operator()(sd_event* event) const
@@ -169,9 +174,8 @@ class PowerLEDMatch
                         auto it = msgData.find("OperatingSystemState");
                         if (it != msgData.end())
                         {
-                            os_state_handler(
-                                std::get<std::string>(it->second) ==
-                                PostCodeDataHolder::OsStatusStandby);
+                            os_state_handler(osStateIsStandby(
+                                std::get<std::string>(it->second)));
                         }
                     });
         }

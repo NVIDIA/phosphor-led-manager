@@ -25,8 +25,6 @@ constexpr const char* HOST_SERVICE_NAME = "xyz.openbmc_project.State.Host";
 constexpr const char* HOST_INTERFACE_NAME = "xyz.openbmc_project.State.Host";
 constexpr const char* OS_STATUS_INTERFACE_NAME =
     "xyz.openbmc_project.State.OperatingSystem.Status";
-constexpr const char* OS_STATUS_STANDBY =
-    "xyz.openbmc_project.State.OperatingSystem.Status.OSStatus.Standby";
 constexpr const char* PROPERTY_INTERFACE_NAME =
     "org.freedesktop.DBus.Properties";
 
@@ -244,7 +242,7 @@ static bool osStateIsStandby(sdbusplus::bus_t& bus)
         auto result = bus.call(method);
         std::variant<std::string> state;
         result.read(state);
-        return std::get<std::string>(state) == OS_STATUS_STANDBY;
+        return osStateIsStandby(std::get<std::string>(state));
     }
     catch (const std::exception& e)
     {
@@ -252,6 +250,13 @@ static bool osStateIsStandby(sdbusplus::bus_t& bus)
                      e.what());
         return false;
     }
+}
+
+static void initOsStatus(sdbusplus::bus_t& bus)
+{
+    started_post = host_power_on.load();
+    ended_post = host_power_on && osStateIsStandby(bus);
+    updatePowerLed();
 }
 
 /*
@@ -446,9 +451,7 @@ int main(int argc, char** argv)
         if (use_os_state)
         {
             operation = "reading initial OperatingSystemState";
-            started_post = host_power_on.load();
-            ended_post = host_power_on && osStateIsStandby(bus);
-            updatePowerLed();
+            initOsStatus(bus);
         }
         else
         {
