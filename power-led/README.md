@@ -31,3 +31,12 @@ These groups are mutually exclusive, so only 1/3 will be active at any given tim
 If the host is already powered on and has exited POST before the BMC boots, then
 the Power LED Controller will use the POST code log to get the power LED into the correct state.
 If the host ever reboots, the Power LED Controller will reset and again cycle through these states.
+Optionally, POST progress can be taken from the host's OperatingSystemState D-Bus property
+instead of POST codes. Add this to the config:
+
+    "POST_use_os_state": true
+
+In this mode POST is considered started as soon as the host is on, and ended when
+`xyz.openbmc_project.State.OperatingSystem.Status.OperatingSystemState` on
+`/xyz/openbmc_project/state/host0` becomes `...OSStatus.Standby`. `POST_start` and
+`POST_end` are then optional and ignored. When the host powers off the state is reset.
