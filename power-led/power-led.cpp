@@ -258,7 +258,7 @@ static void updatePowerLed()
 
 /*
 Taken from Phosphor Button Handler.
-Returns true if chassis is on, false if off.
+Returns true if the host is on, false if Off; invalid states throw.
 */
 bool poweredOn(sdbusplus::bus_t& bus)
 {
@@ -271,18 +271,8 @@ bool poweredOn(sdbusplus::bus_t& bus)
     result.read(state);
 
     const std::string& hostStateStr = std::get<std::string>(state);
-    try
-    {
-        return !(StateServer::Host::HostState::Off ==
-                 StateServer::Host::convertHostStateFromString(hostStateStr));
-    }
-    catch (const sdbusplus::exception::InvalidEnumString& e)
-    {
-        lg2::warning(
-            "CurrentHostState invalid or empty on initial read; assuming host not powered on until a valid state is published. WHAT={WHAT}",
-            "WHAT", e.what());
-        return false;
-    }
+    return !(StateServer::Host::HostState::Off ==
+             StateServer::Host::convertHostStateFromString(hostStateStr));
 }
 
 /*
@@ -367,10 +357,10 @@ int main(int argc, char** argv)
     {
         host_power_on = poweredOn(bus);
     }
-    catch (const sdbusplus::exception::SdBusError& e)
+    catch (const std::exception& e)
     {
-        lg2::error("Failed to query the host power status.");
-        lg2::error(e.what());
+        lg2::error("Failed to read initial host power state", "ERROR",
+                   e.what());
         return -1;
     }
     const char* operation = "registering POST and power-state matches";
@@ -380,7 +370,13 @@ int main(int argc, char** argv)
         PowerLEDMatch powerLEDmatch(bus, updatePostcodeStatus,
                                     updatePowerStatus, eventP);
         operation = "reading initial POST history (GetPostCodes)";
-        updatePostcodeStatus(getPostCodesFromDBUS(bus));
+        // Saved POST history is relevant only while the host is powered on.
+        if (host_power_on)
+        {
+            updatePostcodeStatus(getPostCodesFromDBUS(bus));
+        }
+        // Initialize the LED even if POST history triggered no update.
+        updatePowerLed();
 
         operation = "running the event loop";
         bus.attach_event(eventP.get(), SD_EVENT_PRIORITY_NORMAL);
